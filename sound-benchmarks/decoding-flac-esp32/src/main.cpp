@@ -1,23 +1,67 @@
 #include <Arduino.h>
+#include <WiFi.h>
 
 #include "esp_a2dp_api.h"
 #include "esp_bt.h"
 #include "esp_bt_device.h"
 #include "esp_bt_main.h"
 
+const char *ssid = "...";
+const char *pwd = "...";
+
+WiFiServer tcp;
+WiFiClient client;
+bool connected = false;
+
+const int buff_len = 2 << 14;
+
+typedef struct {
+  uint8_t *start;
+  uint8_t *end;
+  uint8_t *valid_start;
+  uint8_t *valid_end;
+  uint8_t buffer[buff_len];
+} buffer;
+
+buffer buff;
+
+void init_buffer(buffer *buffer) {
+  buffer->start = &buffer->buffer[0];
+  buffer->end = &buffer->buffer[buff_len-1];
+  buffer->valid_start = buffer->start;
+  buffer->valid_end = buffer->start;
+}
+
+inline uint8_t *buffer_ptr_inc(buffer *buffer, uint8_t *ptr) {
+  return ptr + 1 <= buffer->end ? ptr + 1 : buffer->start;
+}
+
+bool buffer_write(buffer *buffer, uint8_t data) {
+  uint8_t *next = buffer_ptr_inc(buffer, buffer->valid_end);
+  if (next == buffer->valid_start) return false;
+
+  buffer->valid_end = next;
+  *buffer->valid_end = data;
+  return true;
+}
+
+bool buffer_read(buffer *buffer, uint8_t *data) {
+  if (buffer->valid_end == buffer->valid_start) return false;
+
+  *data = *buffer->valid_start;
+  buffer->valid_start = buffer_ptr_inc(buffer, buffer->valid_start);
+  return true;
+}
+
 static int32_t bt_app_a2d_data_cb(uint8_t *data, int32_t len)
 {
-  if (len < 0 || data == NULL) return 0;
+  int i;
 
-  // generate random sequence
-  int val = rand() % (1 << 16);
-  for (int i = 0; i < (len >> 1); i++)
-  {
-    data[(i << 1)] = val & 0xff;
-    data[(i << 1) + 1] = (val >> 8) & 0xff;
+  for (i = 0; i < len; i++) {
+    if (!buffer_read(&buff, &data[i])) break;
   }
 
-  return len;
+  return i;
 }
 
 static void esp_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
@@ -33,9 +77,36 @@ static void esp_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
   }
 }
 
+static void WiFiEvent(WiFiEvent_t event) {
+    switch(event) {
+      case SYSTEM_EVENT_STA_GOT_IP:
+          Serial.print("WiFi connected! IP address: ");
+          Serial.println(WiFi.localIP());  
+
+          tcp.begin(2137);
+          connected = true;
+          break;
+      case SYSTEM_EVENT_STA_DISCONNECTED:
+          Serial.println("WiFi lost connection");
+          connected = false;
+          break;
+      default: break;
+    }
+}
+
+void connectToWiFi(const char * ssid, const char * pwd) {
+  Serial.println("Connecting to WiFi network: " + String(ssid));
+  WiFi.disconnect(true);
+  WiFi.onEvent(WiFiEvent);
+  WiFi.begin(ssid, pwd);
+  Serial.println("Waiting for WIFI connection...");
+}
+
 void setup()
 {
   Serial.begin(9600);
+
+  init_buffer(&buff);
 
   if (!btStarted() && !btStart())
   {
@@ -87,9 +158,27 @@ void setup()
     return;
   }
 
+  connectToWiFi(ssid, pwd);
+
   Serial.println("Success!");
 }
 
 void loop()
 {
+  if (!connected) return;
+
+  uint8_t data;
+
+  if (client.connected()) {
+    if (client.available()) {
+      if (client.read(&data, 1) == 1) {
+        buffer_write(&buff, data);
+      }
+    }
+  } else {
+    client = tcp.available();
+    if (client.available()) {
+      Serial.println("New client connected");
+    }
+  }
 }
