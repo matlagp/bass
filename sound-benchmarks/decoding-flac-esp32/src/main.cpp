@@ -16,10 +16,11 @@ bool connected = false;
 const int buff_len = 2 << 14;
 
 typedef struct {
-  uint8_t *start;
-  uint8_t *end;
-  uint8_t *valid_start;
-  uint8_t *valid_end;
+  uint8_t *start;       // ptr to first buffer slot
+  uint8_t *end;         // ptr to last buffer slot
+  uint8_t *valid_start; // ptr to first filled spot (buffer is empty if valid_start == valid_end)
+  uint8_t *valid_end;   // ptr to first unfilled slot
+  SemaphoreHandle_t mutex;
   uint8_t buffer[buff_len];
 } buffer;
 
@@ -30,6 +31,7 @@ void init_buffer(buffer *buffer) {
   buffer->end = &buffer->buffer[buff_len-1];
   buffer->valid_start = buffer->start;
   buffer->valid_end = buffer->start;
+  buffer->mutex = xSemaphoreCreateMutex();
 }
 
 inline uint8_t *buffer_ptr_inc(buffer *buffer, uint8_t *ptr) {
@@ -37,12 +39,57 @@ inline uint8_t *buffer_ptr_inc(buffer *buffer, uint8_t *ptr) {
 }
 
 bool buffer_write(buffer *buffer, uint8_t data) {
-  uint8_t *next = buffer_ptr_inc(buffer, buffer->valid_end);
-  if (next == buffer->valid_start) return false;
+  xSemaphoreTake(buffer->mutex, portMAX_DELAY);
 
-  buffer->valid_end = next;
+  uint8_t *next = buffer_ptr_inc(buffer, buffer->valid_end);
+  if (next == buffer->valid_start) 
+  {
+    xSemaphoreGive(buffer->mutex);
+    return false;
+  }
+
   *buffer->valid_end = data;
+  buffer->valid_end = next;
+
+  xSemaphoreGive(buffer->mutex);
   return true;
+}
+
+uint32_t buffer_read(buffer *buffer, uint8_t *data, int32_t len) {
+  xSemaphoreTake(buffer->mutex, portMAX_DELAY);
+
+  if (buffer->valid_end == buffer->valid_start) {
+    xSemaphoreGive(buffer->mutex);
+    return 0;
+  }
+
+  if (buffer->valid_end > buffer->valid_start) {
+    int32_t l = buffer->valid_end - buffer->valid_start;
+    l = len < l ? len : l;
+    memcpy(data, buffer->valid_start, l);
+    buffer->valid_start += l;
+
+    xSemaphoreGive(buffer->mutex);
+    return l;
+  } else {
+    int32_t l1 = buffer->end - buffer->valid_start + 1;
+    int32_t l2 = 0;
+    l1 = len < l1 ? len : l1;
+    memcpy(data, buffer->valid_start, l1);
+    buffer->valid_start += l1;
+    if (buffer->valid_start > buffer->end) buffer->valid_start = buffer->start;
+
+    if (l1 < len) {
+      l2 = buffer->valid_end - buffer->start;
+      l2 = (len-l1) < l2 ? (len-l1) : l2;
+
+      memcpy(&data[l1], buffer->start, l2);
+      buffer->valid_start += l2;
+    }
+
+    xSemaphoreGive(buffer->mutex);
+    return l1 + l2;
+  }
 }
 
 bool buffer_read(buffer *buffer, uint8_t *data) {
@@ -55,13 +102,7 @@ bool buffer_read(buffer *buffer, uint8_t *data) {
 
 static int32_t bt_app_a2d_data_cb(uint8_t *data, int32_t len)
 {
-  int i;
-
-  for (i = 0; i < len; i++) {
-    if (!buffer_read(&buff, &data[i])) break;
-  }
-
-  return i;
+  return buffer_read(&buff, data, len);
 }
 
 static void esp_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
