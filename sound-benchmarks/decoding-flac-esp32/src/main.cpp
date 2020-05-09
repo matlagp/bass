@@ -38,6 +38,34 @@ inline uint8_t *buffer_ptr_inc(buffer *buffer, uint8_t *ptr) {
   return ptr + 1 <= buffer->end ? ptr + 1 : buffer->start;
 }
 
+int32_t buffer_taken(buffer *buffer) {
+  int32_t ret = 0;
+
+  if (buffer->valid_end > buffer->valid_start) {
+    ret += buffer->valid_end - buffer->valid_start;
+  } else if (buffer->valid_end < buffer->valid_start) {
+    ret += buffer->end - buffer->valid_start + 1;
+    ret += buffer->valid_end - buffer->start;
+  }
+
+  return ret;
+}
+
+int32_t buffer_free_cont(buffer *buffer) {
+  int32_t ret = 0;
+  xSemaphoreTake(buffer->mutex, portMAX_DELAY);
+
+  if (buffer->valid_start <= buffer->valid_end) {
+    ret = buffer->end - buffer->valid_end;
+    if (buffer->valid_start != buffer->start) ret += 1;
+  } else if (buffer->valid_start > buffer->valid_end) {
+    ret = buffer->valid_start - buffer->valid_end - 1;
+  }
+
+  xSemaphoreGive(buffer->mutex);
+  return ret;
+}
+
 bool buffer_write(buffer *buffer, uint8_t data) {
   xSemaphoreTake(buffer->mutex, portMAX_DELAY);
 
@@ -58,6 +86,8 @@ bool buffer_write(buffer *buffer, uint8_t data) {
 uint32_t buffer_read(buffer *buffer, uint8_t *data, int32_t len) {
   xSemaphoreTake(buffer->mutex, portMAX_DELAY);
 
+  int32_t available = buffer_taken(buffer);
+
   if (buffer->valid_end == buffer->valid_start) {
     xSemaphoreGive(buffer->mutex);
     return 0;
@@ -67,7 +97,7 @@ uint32_t buffer_read(buffer *buffer, uint8_t *data, int32_t len) {
     int32_t l = buffer->valid_end - buffer->valid_start;
     l = len < l ? len : l;
     memcpy(data, buffer->valid_start, l);
-    buffer->valid_start += l;
+    if (available > 128) buffer->valid_start += l;
 
     xSemaphoreGive(buffer->mutex);
     return l;
@@ -77,14 +107,14 @@ uint32_t buffer_read(buffer *buffer, uint8_t *data, int32_t len) {
     l1 = len < l1 ? len : l1;
     memcpy(data, buffer->valid_start, l1);
     buffer->valid_start += l1;
-    if (buffer->valid_start > buffer->end) buffer->valid_start = buffer->start;
+    if (available > 128 && buffer->valid_start > buffer->end) buffer->valid_start = buffer->start;
 
     if (l1 < len) {
       l2 = buffer->valid_end - buffer->start;
       l2 = (len-l1) < l2 ? (len-l1) : l2;
 
       memcpy(&data[l1], buffer->start, l2);
-      buffer->valid_start += l2;
+      if (available > 128) buffer->valid_start += l2;
     }
 
     xSemaphoreGive(buffer->mutex);
@@ -208,12 +238,22 @@ void loop()
 {
   if (!connected) return;
 
-  uint8_t data;
+  uint8_t devnull[1024];
 
   if (client.connected()) {
     if (client.available()) {
-      if (client.read(&data, 1) == 1) {
-        buffer_write(&buff, data);
+        // client.readBytes(devnull, 1024);
+      int32_t len = buffer_free_cont(&buff);
+      if (len == 0) {
+        client.readBytes(devnull, 128);
+        return;
+      }
+      len = len > 128 ? 128 : len;
+      len = client.readBytes(buff.valid_end, len);
+      if (buff.valid_end + len > buff.end) {
+        (&buff)->valid_end = buff.start;
+      } else {
+        (&buff)->valid_end += len;
       }
     }
   } else {
