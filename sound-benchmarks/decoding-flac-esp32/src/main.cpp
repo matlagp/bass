@@ -13,7 +13,7 @@ WiFiServer tcp;
 WiFiClient client;
 bool connected = false;
 
-const int buff_len = 2 << 14;
+const int buff_len = (2 << 14) + 1;
 
 typedef struct {
   uint8_t *start;       // ptr to first buffer slot
@@ -21,12 +21,14 @@ typedef struct {
   uint8_t *valid_start; // ptr to first filled spot (buffer is empty if valid_start == valid_end)
   uint8_t *valid_end;   // ptr to first unfilled slot
   SemaphoreHandle_t mutex;
-  uint8_t buffer[buff_len];
+  uint8_t *buffer;
 } buffer;
 
 buffer buff;
 
 void init_buffer(buffer *buffer) {
+  buffer->buffer = (uint8_t*) calloc(buff_len, 1);
+  assert(buffer != nullptr);
   buffer->start = &buffer->buffer[0];
   buffer->end = &buffer->buffer[buff_len-1];
   buffer->valid_start = buffer->start;
@@ -53,7 +55,7 @@ int32_t buffer_taken(buffer *buffer) {
 
 int32_t buffer_free_cont(buffer *buffer) {
   int32_t ret = 0;
-  xSemaphoreTake(buffer->mutex, portMAX_DELAY);
+  //xSemaphoreTake(buffer->mutex, portMAX_DELAY);
 
   if (buffer->valid_start <= buffer->valid_end) {
     ret = buffer->end - buffer->valid_end;
@@ -62,34 +64,34 @@ int32_t buffer_free_cont(buffer *buffer) {
     ret = buffer->valid_start - buffer->valid_end - 1;
   }
 
-  xSemaphoreGive(buffer->mutex);
+  //xSemaphoreGive(buffer->mutex);
   return ret;
 }
 
 bool buffer_write(buffer *buffer, uint8_t data) {
-  xSemaphoreTake(buffer->mutex, portMAX_DELAY);
+  //xSemaphoreTake(buffer->mutex, portMAX_DELAY);
 
   uint8_t *next = buffer_ptr_inc(buffer, buffer->valid_end);
   if (next == buffer->valid_start) 
   {
-    xSemaphoreGive(buffer->mutex);
+    //xSemaphoreGive(buffer->mutex);
     return false;
   }
 
   *buffer->valid_end = data;
   buffer->valid_end = next;
 
-  xSemaphoreGive(buffer->mutex);
+  //xSemaphoreGive(buffer->mutex);
   return true;
 }
 
 uint32_t buffer_read(buffer *buffer, uint8_t *data, int32_t len) {
-  xSemaphoreTake(buffer->mutex, portMAX_DELAY);
+  //xSemaphoreTake(buffer->mutex, portMAX_DELAY);
 
   int32_t available = buffer_taken(buffer);
 
   if (buffer->valid_end == buffer->valid_start) {
-    xSemaphoreGive(buffer->mutex);
+    //xSemaphoreGive(buffer->mutex);
     return 0;
   }
 
@@ -99,7 +101,7 @@ uint32_t buffer_read(buffer *buffer, uint8_t *data, int32_t len) {
     memcpy(data, buffer->valid_start, l);
     if (available > 128) buffer->valid_start += l;
 
-    xSemaphoreGive(buffer->mutex);
+    //xSemaphoreGive(buffer->mutex);
     return l;
   } else {
     int32_t l1 = buffer->end - buffer->valid_start + 1;
@@ -117,7 +119,7 @@ uint32_t buffer_read(buffer *buffer, uint8_t *data, int32_t len) {
       if (available > 128) buffer->valid_start += l2;
     }
 
-    xSemaphoreGive(buffer->mutex);
+    //xSemaphoreGive(buffer->mutex);
     return l1 + l2;
   }
 }
@@ -132,7 +134,9 @@ bool buffer_read(buffer *buffer, uint8_t *data) {
 
 static int32_t bt_app_a2d_data_cb(uint8_t *data, int32_t len)
 {
-  return buffer_read(&buff, data, len);
+  memcpy(data, buff.buffer, len);
+  return len;
+  // return buffer_read(&buff, data, len);
 }
 
 static void esp_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
@@ -245,15 +249,15 @@ void loop()
         // client.readBytes(devnull, 1024);
       int32_t len = buffer_free_cont(&buff);
       if (len == 0) {
-        client.readBytes(devnull, 128);
+        client.readBytes(devnull, 256);
         return;
       }
-      len = len > 128 ? 128 : len;
+      len = len > 256 ? 256 : len;
       len = client.readBytes(buff.valid_end, len);
       if (buff.valid_end + len > buff.end) {
-        (&buff)->valid_end = buff.start;
+        buff.valid_end = buff.start;
       } else {
-        (&buff)->valid_end += len;
+        buff.valid_end += len;
       }
     }
   } else {
