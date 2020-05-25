@@ -1,3 +1,4 @@
+import bluetooth
 from flask import Flask, render_template
 from .repositories import NodeRepository
 app = Flask(__name__)
@@ -17,13 +18,26 @@ def not_found(error):
 
 # app.register_blueprint(auth_module)
 
-@app.route('/nodes')
+@app.route('/nodes/')
 def nodes_index():
     return render_template('nodes/index.html', nodes=node_repository.all())
     # return '<br>'.join([str(node) for node in node_repository.all()])
 
-@app.route('/nodes/<node_id>')
+@app.route('/nodes/<node_id>/')
 def nodes_show(node_id=0):
     return str(node_repository.find(node_id))
+
+@app.route('/bt/')
+def bt():
+    nearby_devices = bluetooth.discover_devices(duration=8, lookup_names=True,
+                                                flush_cache=False, lookup_class=False)
+
+    ret = "Found {} devices".format(len(nearby_devices))
+    for addr, name in nearby_devices:
+        try:
+            ret += "<br>{} - {}".format(addr, name)
+        except UnicodeEncodeError:
+            ret += "<br>{} - {}".format(addr, name.encode("utf-8", "replace"))
+    return ret
 
 node_repository.create_database()
