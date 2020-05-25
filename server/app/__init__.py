@@ -40,4 +40,8 @@ def bt():
             ret += "<br>{} - {}".format(addr, name.encode("utf-8", "replace"))
     return ret
 
+@app.route('/bt/pair/<bt_addr>/')
+def bt_pair(bt_addr):
+    return bt_addr
+
 node_repository.create_database()
