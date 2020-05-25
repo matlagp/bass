@@ -19,7 +19,8 @@ def not_found(error):
 
 @app.route('/nodes')
 def nodes_index():
-    return '<br>'.join([str(node) for node in node_repository.all()])
+    return render_template('nodes/index.html', nodes=node_repository.all())
+    # return '<br>'.join([str(node) for node in node_repository.all()])
 
 @app.route('/nodes/<node_id>')
 def nodes_show(node_id=0):
