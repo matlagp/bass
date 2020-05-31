@@ -3,8 +3,12 @@
 
 BluetoothSerial bluetoothSerial;
 
+String ssid;
+String password;
+String serverIP;
+int setupStep = 0;
+
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
 
   bluetoothSerial.begin("Node-");
@@ -15,21 +19,30 @@ void setup() {
 
 void loop() {
   if (bluetoothSerial.available()) {
+    char type = bluetoothSerial.read();
     String data = bluetoothSerial.readStringUntil('\n');
-    switch (data[0]) {
-    case '1':
+    if (type == '1') {
       Serial.printf("SSID: ");
-      break;
-    case '2':
+      ssid = data;
+      setupStep = 1;
+    } else if (setupStep == 1 && type == '2') {
       Serial.printf("PASS: ");
-      break;
-    case '3':
+      password = data;
+      setupStep = 2;
+    } else if (setupStep == 2 && type == '3') {
       Serial.printf("IP:   ");
-      break;
-    default:
+      serverIP = data;
+      setupStep = 3;
+    } else {
       Serial.printf("WHAT: ");
     }
+
     Serial.println(data);
+
+    if (setupStep == 3) {
+      Serial.println("Connecting to WiFi");
+      bluetoothSerial.end();
+    }
   }
 
   delay(50);
