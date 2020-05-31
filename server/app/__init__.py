@@ -1,4 +1,5 @@
 import bluetooth
+import sys
 from flask import Flask, render_template
 from .repositories import NodeRepository
 app = Flask(__name__)
@@ -41,7 +42,16 @@ def bt():
     return ret
 
 @app.route('/bt/pair/<bt_addr>/')
-def bt_pair(bt_addr):
-    return bt_addr
+def bt_pair(bt_addr, bt_port = 1):
+    try:
+        sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        sock.connect((bt_addr, bt_port))
+        print('Connected', file=sys.stderr)
+        sock.send('\n'.join(['1foo', '2bar', '3192.168.11.110', '']))
+    except Exception as e:
+        print(e)
+    finally:
+        sock.close()
+        return "done"
 
 node_repository.create_database()
