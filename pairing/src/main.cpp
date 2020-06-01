@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <BluetoothSerial.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
 
 BluetoothSerial bluetoothSerial;
 
@@ -7,6 +9,7 @@ String ssid;
 String password;
 String serverIP;
 int setupStep = 0;
+int retries;
 
 void setup() {
   Serial.begin(9600);
@@ -41,8 +44,26 @@ void loop() {
 
     if (setupStep == 3) {
       Serial.println("Connecting to WiFi");
-      bluetoothSerial.end();
+      bluetoothSerial.disconnect();
+
+      WiFi.begin(ssid.c_str(), password.c_str());
+      retries = 50;
     }
+  }
+
+  if (setupStep == 3) {
+    if (WiFi.status() != WL_CONNECTED) {
+      retries--;
+    } else {
+      Serial.println("Connected to WiFi");
+      bluetoothSerial.end();
+      setupStep = 4;
+    }
+  }
+
+  if (setupStep == 3 && retries < 0) {
+    Serial.println("Connecting to WiFi failed");
+    setupStep = 0;
   }
 
   delay(50);
