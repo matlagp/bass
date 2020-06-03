@@ -13,6 +13,9 @@ int retries;
 
 char name[14];
 
+char topic_state[30];
+char topic_settings[35];
+
 WiFiClient wifiClient;
 PubSubClient pubSubClient(wifiClient);
 
@@ -20,6 +23,8 @@ void setup() {
   Serial.begin(9600);
 
   snprintf(name, 14, "node-%08X", (uint32_t) ESP.getEfuseMac());
+  snprintf(topic_state, 30, "/nodes/%08X/state", (uint32_t) ESP.getEfuseMac());
+  snprintf(topic_settings, 35, "/nodes/%08X/settings/#", (uint32_t) ESP.getEfuseMac());
 
   bluetoothSerial.begin(name);
 
@@ -67,7 +72,7 @@ void loop() {
       bluetoothSerial.disconnect();
 
       WiFi.begin(ssid.c_str(), password.c_str());
-      retries = 50;
+      retries = 200;
     }
   }
 
@@ -77,6 +82,7 @@ void loop() {
       retries--;
     } else {
       Serial.println("Connected to WiFi");
+      Serial.println(WiFi.localIP());
       bluetoothSerial.end();
       setupStep = 4;
 
@@ -94,11 +100,11 @@ void loop() {
   // Connecting to MQTT
   if (setupStep == 4
       && !pubSubClient.connected()
-      && pubSubClient.connect(name, "/nodes/node/state", 0, true, "0"))
+      && pubSubClient.connect(name, topic_state, 0, true, "0"))
   {
     Serial.println("Connected to MQTT");
-    pubSubClient.subscribe("/nodes/#");
-    pubSubClient.publish("/nodes/node/state", "1", true);
+    pubSubClient.subscribe(topic_settings);
+    pubSubClient.publish(topic_state, WiFi.localIP().toString().c_str(), true);
     setupStep = 5;
   }
 
