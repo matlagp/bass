@@ -2,9 +2,12 @@ import bluetooth
 import sys
 from flask import Flask, render_template
 from .repositories import NodeRepository
+from .mqtt import MQTTClient
 app = Flask(__name__)
 
 app.config.from_object('config')
+
+MQTTClient().start()
 
 # Define the database object which is imported
 # by modules and controllers

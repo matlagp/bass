@@ -7,6 +7,7 @@ verify_ssl = true
 
 [packages]
 flask = "*"
+paho-mqtt = "*"
 pycodestyle = "*"
 
 [requires]
