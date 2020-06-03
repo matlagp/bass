@@ -1,5 +1,7 @@
 import bluetooth
 import sys
+import os
+import socket
 from flask import Flask, render_template, redirect, request
 from .repositories import NodeRepository
 from .mqtt import MQTTClient
@@ -63,11 +65,27 @@ def bt():
 
 @app.route('/bt/pair/<bt_addr>/')
 def bt_pair(bt_addr, bt_port = 1):
+    def get_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachab
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except Exception:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
     try:
         sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
         sock.connect((bt_addr, bt_port))
         print('Connected', file=sys.stderr)
-        sock.send('\n'.join(['1foo', '2bar', '3192.168.11.110', '']))
+        sock.send('\n'.join([
+            f"1{os.getenv('WIFI_SSID')}",
+            f"2{os.getenv('WIFI_PASSWORD')}",
+            f"3{get_ip()}",
+            ''
+        ]))
     except Exception as e:
         print(e)
     finally:
