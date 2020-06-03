@@ -5,6 +5,8 @@ from .models import Node
 from .repositories import NodeRepository
 
 class MQTTClient(threading.Thread):
+    node_repository = NodeRepository()
+
     def __init__(self):
         threading.Thread.__init__(self)
         self.daemon = True
@@ -17,18 +19,22 @@ class MQTTClient(threading.Thread):
         self.client.loop_forever()
 
     def _on_connect(client, userdata, flags, rc):
-        print(f"CONNECTED")
         client.subscribe("/nodes/#")
 
     def _on_message(client, userdata, message):
-        print(f"MESSAGE({message.topic}): {message.payload}")
-        topic = message.topic.split('/')[1:]
-        print(topic)
-        if topic[2] == 'state':
-            try:
-                node = Node(int(topic[1], 16), message.payload.decode('ascii'))
-                print(node)
-                NodeRepository().create(node)
-                print('inserting')
-            except Exeption as e:
-                print(e)
+        try:
+            print(f"MESSAGE({message.topic}): {message.payload}")
+            topic = message.topic.split('/')[1:]
+            node_id = int(topic[1], 16)
+            if topic[2] == 'state':
+                node = Node(node_id, message.payload.decode('ascii'))
+                __class__.node_repository.create(node)
+            if topic[2] == 'settings' and topic[3] == 'volume':
+                volume = int(message.payload.decode('ascii'))
+                node = __class__.node_repository.find(node_id)
+                if volume < 0 or volume > 100:
+                    raise ValueError("Volume not between 0 and 100")
+                node.volume = volume
+                __class__.node_repository.update(node)
+        except Exception as e:
+            print(f"MQTT MSG ERROR: {e}")

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Set up new nodes
+{% endblock %}
+
+{% block content %}
+<h1>New Nodes</h1>
+
+<ul>
+  {% for (addr, name) in new_nodes %}
+    <li>
+        <p>{{ name }}, {{ addr }}</p>
+        <a href="/bt/pair/{{ addr }}">Pair</a>
+    </li>
+  {% endfor %}
+</ul>
+
+{% endblock %}

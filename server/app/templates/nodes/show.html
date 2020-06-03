@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Edit Node #{{ node.id }}
+{% endblock %}
+
+{% block content %}
+<h1>Edit Node #{{ node.id }}</h1>
+
+<h2>IP</h2>
+<p>{{ node.ip }}</p>
+<h2>Volume</h2>
+<p>{{ node.volume }}</p>
+
+<a href="/nodes">Back</a>
+<a href="/nodes/{{ node.id }}/edit">Edit</a>
+
+{% endblock %}

@@ -1,6 +1,6 @@
 import bluetooth
 import sys
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, request
 from .repositories import NodeRepository
 from .mqtt import MQTTClient
 app = Flask(__name__)
@@ -25,24 +25,41 @@ def not_found(error):
 @app.route('/nodes/')
 def nodes_index():
     return render_template('nodes/index.html', nodes=node_repository.all())
-    # return '<br>'.join([str(node) for node in node_repository.all()])
 
-@app.route('/nodes/<node_id>/')
+@app.route('/nodes/<node_id>/', methods=['GET'])
 def nodes_show(node_id=0):
-    return str(node_repository.find(node_id))
+    return render_template('nodes/show.html', node=node_repository.find(node_id))
+
+@app.route('/nodes/<node_id>/', methods=['POST'])
+def nodes_update(node_id=0):
+    node = node_repository.find(node_id)
+    if (request.values['volume']):
+        try: 
+            volume = int(request.values['volume'])
+            if volume < 0 or volume > 100:
+                raise ValueError("Volume not between 0 and 100")
+            node.volume = volume
+            node_repository.update(node)
+        except Exception as e:
+            print(e)
+            return render_template('nodes/edit.html', node=node)
+    return render_template('nodes/show.html', node=node)
+
+@app.route('/nodes/<node_id>/edit/')
+def nodes_edit(node_id=0):
+    return render_template('nodes/edit.html', node=node_repository.find(node_id))
 
 @app.route('/bt/')
 def bt():
-    nearby_devices = bluetooth.discover_devices(duration=8, lookup_names=True,
+    nearby_devices = bluetooth.discover_devices(duration=1, lookup_names=True,
                                                 flush_cache=False, lookup_class=False)
 
-    ret = "Found {} devices".format(len(nearby_devices))
-    for addr, name in nearby_devices:
-        try:
-            ret += "<br>{} - {}".format(addr, name)
-        except UnicodeEncodeError:
-            ret += "<br>{} - {}".format(addr, name.encode("utf-8", "replace"))
-    return ret
+    new_nodes = [
+        (addr, name) for addr, name
+        in nearby_devices if name[0:5] == 'node-'
+    ]
+
+    return render_template('bt/index.html', new_nodes=new_nodes)
 
 @app.route('/bt/pair/<bt_addr>/')
 def bt_pair(bt_addr, bt_port = 1):
@@ -55,6 +72,6 @@ def bt_pair(bt_addr, bt_port = 1):
         print(e)
     finally:
         sock.close()
-        return "done"
+        return redirect('/bt/')
 
 node_repository.create_database()

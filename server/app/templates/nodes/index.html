@@ -7,7 +7,14 @@ Nodes
 {% block content %}
 <h1>Nodes</h1>
 
-{% for node in nodes %}
-<p>{{ node.id }} : {{ node.ip}}</p>
-{% endfor %}
+<ul>
+  {% for node in nodes %}
+    <li>
+        <p>{{ node }}</p>
+        <a href="/nodes/{{node.id}}">Show</a>
+        <a href="/nodes/{{node.id}}/edit">Edit</a>
+    </li>
+  {% endfor %}
+</ul>
+
 {% endblock %}

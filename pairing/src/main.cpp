@@ -16,6 +16,8 @@ char name[14];
 char topic_state[30];
 char topic_settings[35];
 
+int volume = 100;
+
 WiFiClient wifiClient;
 PubSubClient pubSubClient(wifiClient);
 
@@ -35,13 +37,28 @@ void callback(char* topic, byte* message, unsigned int length) {
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
   Serial.print(". Message: ");
-  String messageTemp;
+  char msg_c_string[4] = "\0\0\0";
 
   for (int i = 0; i < length; i++) {
     Serial.print((char)message[i]);
-    messageTemp += (char)message[i];
   }
   Serial.println();
+
+  int j = 0;
+  for (int i = 0; topic[i] != '\0'; i++) {
+    if (topic[i] == '/') j = i+1;
+  }
+
+  if (strcmp(&topic[j], "volume") == 0) {
+    strncpy(msg_c_string, (char*) message, length > 3 ? 3 : length);
+    int newVolume = atoi(msg_c_string);
+    if (newVolume >=0 && newVolume <= 100) {
+      volume = newVolume;
+      Serial.printf("Volume: %d\n", volume);
+    } else {
+      Serial.printf("Volume: %d is invalid\n", newVolume);
+    }
+  }
 }
 
 void loop() {
