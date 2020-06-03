@@ -167,3 +167,6 @@ snap/
 prime/
 stage/
 pip-wheel-metadata/
+
+# sqlite database
+bass.db

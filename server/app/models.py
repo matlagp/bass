@@ -5,4 +5,4 @@ class Node:
         self.volume = volume
 
     def __str__(self):
-        return str.format('Node(id={}, ip={}, volume={})', self.id, self.ip, self.volume)
+        return f"Node(id={self.id}, ip={self.ip}, volume={self.volume})"

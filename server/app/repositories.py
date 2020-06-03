@@ -1,6 +1,7 @@
 from .db_conn import DbConn
 from .models import Node
 
+
 class NodeRepository:
     def __init__(self):
         pass

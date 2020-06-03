@@ -4,6 +4,7 @@ import paho.mqtt.client as mqtt
 from .models import Node
 from .repositories import NodeRepository
 
+
 class MQTTClient(threading.Thread):
     node_repository = NodeRepository()
 
