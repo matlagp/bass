@@ -9,7 +9,7 @@ class NodeRepository:
         with DbConn() as conn:
             conn.execute(
                 'create table if not exists Nodes '
-                '(id INTEGER PRIMARY KEY AUTOINCREMENT, '
+                '(id INTEGER PRIMARY KEY, '
                 'ip TEXT NOT NULL)'
             )
 
@@ -22,9 +22,10 @@ class NodeRepository:
 
     def create(self, node):
         with DbConn() as conn:
-            cursor = conn.cursor()
-            cursor.execute('insert into Nodes(ip) values(?)', (node.ip,))
-            node.id = cursor.lastrowid
+            conn.execute(
+                'insert into Nodes(id, ip) values(?, ?) on conflict(id) do update set ip = excluded.ip',
+                (node.id, node.ip)
+            )
         return node
 
     def update(self, node):

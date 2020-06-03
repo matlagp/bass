@@ -1,6 +1,8 @@
 import os
 import threading
 import paho.mqtt.client as mqtt
+from .models import Node
+from .repositories import NodeRepository
 
 class MQTTClient(threading.Thread):
     def __init__(self):
@@ -20,3 +22,13 @@ class MQTTClient(threading.Thread):
 
     def _on_message(client, userdata, message):
         print(f"MESSAGE({message.topic}): {message.payload}")
+        topic = message.topic.split('/')[1:]
+        print(topic)
+        if topic[2] == 'state':
+            try:
+                node = Node(int(topic[1], 16), message.payload.decode('ascii'))
+                print(node)
+                NodeRepository().create(node)
+                print('inserting')
+            except Exeption as e:
+                print(e)
