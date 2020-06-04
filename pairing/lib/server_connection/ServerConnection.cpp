@@ -6,14 +6,14 @@
 
 ServerConnection::ServerConnection()
 {
-  snprintf(name, 14, "node-%08X", (uint32_t)ESP.getEfuseMac());
-  snprintf(topic_state, 30, "/nodes/%08X/state", (uint32_t)ESP.getEfuseMac());
-  snprintf(topic_settings, 35, "/nodes/%08X/settings/#", (uint32_t)ESP.getEfuseMac());
+  snprintf(name, 14, "node-%08X", (uint32_t) (ESP.getEfuseMac() >> 16));
+  snprintf(topic_state, 30, "/nodes/%08X/state", (uint32_t) (ESP.getEfuseMac() >> 16));
+  snprintf(topic_settings, 35, "/nodes/%08X/settings/#", (uint32_t) (ESP.getEfuseMac() >> 16));
 }
 
 void ServerConnection::loop_forever()
 {
-  xTaskCreate(loop, "Connect", 2 << 12, NULL, 2, NULL);
+  xTaskCreate(loop, "Connect", 1 << 12, NULL, 2, NULL);
 }
 
 void ServerConnection::loop(void *params)
@@ -65,7 +65,11 @@ void ServerConnection::loop()
         Serial.printf("WHAT: ");
       }
 
-      Serial.println(data);
+      if (type != '2') {
+        Serial.println(data);
+      } else {
+        Serial.println("******");
+      }
 
       if (setupStep == 3)
       {
