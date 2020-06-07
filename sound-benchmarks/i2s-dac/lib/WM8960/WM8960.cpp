@@ -41,15 +41,15 @@ uint8_t _WM8960::begin() {
     writeRegister(0x07, 0x0002);
     
     // Configure HP_L and HP_R OUTPUTS
-    writeRegister(0x02, 0x006F | 0x0100);  //LOUT1 Volume Set
-    writeRegister(0x03, 0x006F | 0x0100);  //ROUT1 Volume Set
+    writeRegister(0x02, 0x0070 | 0x0100);  // LOUT1 Volume Set
+    writeRegister(0x03, 0x0070 | 0x0100);  // ROUT1 Volume Set
     
     // Configure SPK_RP and SPK_RN
-    writeRegister(0x28, 0x007F | 0x0100); //Left Speaker Volume
-    writeRegister(0x29, 0x007F | 0x0100); //Right Speaker Volume
+    writeRegister(0x28, 0x0000 | 0x0100); // Left Speaker Volume
+    writeRegister(0x29, 0x0000 | 0x0100); // Right Speaker Volume
     
     // Enable the OUTPUTS
-    writeRegister(0x31, 0x00F7); //Enable Class D Speaker Outputs
+    writeRegister(0x31, 0x0037); // Disable Class D Speaker Outputs
     
     // Configure DAC volume
     writeRegister(0x0a, 0x00FF | 0x0100);

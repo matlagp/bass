@@ -9,42 +9,62 @@
 #include <HTTPClient.h>
 #include <WiFiClient.h>
 #include <WiFi.h>
-#include <WiFiUdp.h>
+#include <AsyncUDP.h>
 #include <SD.h>
 #include "AudioGeneratorAAC.h"
+#include "AudioGeneratorWAV.h"
+#include "AudioGeneratorRaw.h"
 #include "AudioOutputI2S.h"
 #include "AudioFileSourcePROGMEM.h"
-#include "sampleaac.h"
+#include "casio.h"
 #include "WM8960.h"
-#include "AudioBuffer.h"
+#include "CircularBuffer.h"
+#include "AudioFileSourceRAM.h"
 
-AudioFileSourcePROGMEM *in;
-AudioGeneratorAAC *aac;
+// AudioFileSourcePROGMEM *in;
+AudioFileSourceRAM *in;
+AudioGeneratorRaw *aac;
 AudioOutputI2S *out;
-WiFiUDP wifiudp;
-AudioBuffer buffer = AudioBuffer(16);
+AsyncUDP wifiudp;
+CircularBuffer buffer = CircularBuffer(65565);
 
 const char *ssid = "...";
 const char *pwd = "...";
 
 bool connected = false;
 
-char packetBuffer[128];
-
 static void WiFiEvent(WiFiEvent_t event) {
     switch(event) {
-      case SYSTEM_EVENT_STA_GOT_IP:
-          Serial.print("WiFi connected! IP address: ");
-          Serial.println(WiFi.localIP());  
+        case SYSTEM_EVENT_STA_GOT_IP:
+            Serial.print("WiFi connected! IP address: ");
+            Serial.println(WiFi.localIP());  
 
-          wifiudp.begin(2137);
-          connected = true;
-          break;
-      case SYSTEM_EVENT_STA_DISCONNECTED:
-          Serial.println("WiFi lost connection");
-          connected = false;
-          break;
-      default: break;
+
+            if (wifiudp.listen(2137)) {
+                Serial.println("UDP server up");
+                wifiudp.onPacket([](AsyncUDPPacket packet) {
+                    Serial.print("Received packet of size ");
+                    Serial.println(packet.length());
+                    Serial.print("From ");
+                    IPAddress remoteIp = packet.remoteIP();
+                    Serial.print(remoteIp);
+                    Serial.print(", port ");
+                    Serial.println(packet.remotePort());
+
+                    if (packet.length() > 0) {
+                        int s = buffer.push(packet.data(), packet.length());
+                        Serial.printf("Wrote %d bytes\n", s);
+                        // buffer.debug();
+                    }
+                });
+            }
+            connected = true;
+            break;
+        case SYSTEM_EVENT_STA_DISCONNECTED:
+            Serial.println("WiFi lost connection");
+            connected = false;
+            break;
+        default: break;
     }
 }
 
@@ -54,6 +74,24 @@ void connectToWiFi(const char * ssid, const char * pwd) {
     WiFi.onEvent(WiFiEvent);
     WiFi.begin(ssid, pwd);
     Serial.println("Waiting for WIFI connection...");
+}
+
+void setupAudioChain() {
+    audioLogger = &Serial;
+
+    in = new AudioFileSourceRAM(&buffer);
+    aac = new AudioGeneratorRaw();
+    // in = new AudioFileSourcePROGMEM(casio, sizeof(casio));
+    // aac = new AudioGeneratorWAV();
+    out = new AudioOutputI2S(0, AudioOutputI2S::EXTERNAL_I2S, 8, 1);
+
+    out->SetBitsPerSample(16);
+    out->SetChannels(2);
+    out->SetRate(44100);
+    out->SetOutputModeMono(false);
+    out->SetPinout(I2S_CLK, I2S_WS, I2S_TXSDA);
+
+    aac->begin(in, out);
 }
 
 void setup() {
@@ -70,41 +108,11 @@ void setup() {
     buffer.clear();
 
     connectToWiFi(ssid, pwd);
-
-    audioLogger = &Serial;
-    in = new AudioFileSourcePROGMEM(sampleaac, sizeof(sampleaac));
-    aac = new AudioGeneratorAAC();
-    out = new AudioOutputI2S(0, AudioOutputI2S::EXTERNAL_I2S);
-    out->SetPinout(I2S_CLK, I2S_WS, I2S_TXSDA);
-    aac->begin(in, out);
+    setupAudioChain();
 }
 
 void loop() {
     if (!connected) return;
-
-    // if there's data available, read a packet
-    int packetSize = wifiudp.parsePacket();
-    if (packetSize) {
-        Serial.print("Received packet of size ");
-        Serial.println(packetSize);
-        Serial.print("From ");
-        IPAddress remoteIp = wifiudp.remoteIP();
-        Serial.print(remoteIp);
-        Serial.print(", port ");
-        Serial.println(wifiudp.remotePort());
-
-        int len = wifiudp.read(packetBuffer, 128);
-        if (len > 0) {
-            if (packetBuffer[0] == 'e') {
-                int s = buffer.shift((byte*) packetBuffer, 10);
-                Serial.printf("Read %d bytes\n", s);
-            } else {
-                int s = buffer.push((byte*) packetBuffer, len);
-                Serial.printf("Wrote %d bytes\n", s);
-            }
-            buffer.debug();
-        }
-    }
 
     if (aac->isRunning()) {
         aac->loop();

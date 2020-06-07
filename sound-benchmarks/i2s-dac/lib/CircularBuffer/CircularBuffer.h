@@ -3,10 +3,10 @@
 
 #include <Arduino.h>
 
-class AudioBuffer {
+class CircularBuffer {
 public:
-    AudioBuffer(size_t capacity);
-    ~AudioBuffer();
+    CircularBuffer(size_t capacity);
+    ~CircularBuffer();
 
     void clear();
 

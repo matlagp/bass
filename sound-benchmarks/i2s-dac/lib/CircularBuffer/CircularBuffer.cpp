@@ -1,8 +1,8 @@
-#include "AudioBuffer.h"
+#include "CircularBuffer.h"
 
 #include <Arduino.h>
 
-AudioBuffer::AudioBuffer(size_t capacity) {
+CircularBuffer::CircularBuffer(size_t capacity) {
     buffer = new byte[capacity];
     end = &buffer[capacity-1];
     head = buffer;
@@ -11,31 +11,31 @@ AudioBuffer::AudioBuffer(size_t capacity) {
     this->capacity = capacity;
 }
 
-AudioBuffer::~AudioBuffer() {
+CircularBuffer::~CircularBuffer() {
     delete[] buffer;
 }
 
-void AudioBuffer::clear() {
+void CircularBuffer::clear() {
     memset(buffer, '\0', capacity);
 }
 
-size_t AudioBuffer::available() {
+size_t CircularBuffer::available() {
     return capacity - count;
 }
 
-size_t AudioBuffer::taken() {
+size_t CircularBuffer::taken() {
     return count;
 }
 
-bool AudioBuffer::isEmpty() {
+bool CircularBuffer::isEmpty() {
     return count == 0;
 }
 
-bool AudioBuffer::isFull() {
+bool CircularBuffer::isFull() {
     return count == capacity;
 }
 
-size_t AudioBuffer::push(byte *data, size_t sz) {
+size_t CircularBuffer::push(byte *data, size_t sz) {
     size_t curr_available = available();
     size_t curr_tspace = tailSpace();
 
@@ -48,7 +48,7 @@ size_t AudioBuffer::push(byte *data, size_t sz) {
     }
 }
 
-size_t AudioBuffer::tailSpace() {
+size_t CircularBuffer::tailSpace() {
     if (tail < head) {
         return head - tail;
     } else {
@@ -56,7 +56,7 @@ size_t AudioBuffer::tailSpace() {
     }
 }
 
-void AudioBuffer::writeBuffer(byte *data, size_t firstPart, size_t secondPart) {
+void CircularBuffer::writeBuffer(byte *data, size_t firstPart, size_t secondPart) {
     memcpy(tail, data, firstPart);
     if (secondPart != 0) {
         memcpy(buffer, data + firstPart, secondPart);
@@ -67,7 +67,7 @@ void AudioBuffer::writeBuffer(byte *data, size_t firstPart, size_t secondPart) {
     tail += firstPart + secondPart;
 }
 
-size_t AudioBuffer::shift(byte *target, size_t sz) {
+size_t CircularBuffer::shift(byte *target, size_t sz) {
     size_t curr_taken = taken();
     size_t curr_hspace = headSpace();
 
@@ -80,7 +80,7 @@ size_t AudioBuffer::shift(byte *target, size_t sz) {
     }
 }
 
-size_t AudioBuffer::headSpace() {
+size_t CircularBuffer::headSpace() {
     if (head <= tail) {
         return tail - head;
     } else {
@@ -88,7 +88,7 @@ size_t AudioBuffer::headSpace() {
     }
 }
 
-void AudioBuffer::readBuffer(byte *target, size_t firstPart, size_t secondPart) {
+void CircularBuffer::readBuffer(byte *target, size_t firstPart, size_t secondPart) {
     memcpy(target, head, firstPart);
     if (secondPart != 0) {
         memcpy(target + firstPart, buffer, secondPart);
@@ -99,7 +99,7 @@ void AudioBuffer::readBuffer(byte *target, size_t firstPart, size_t secondPart) 
     head += firstPart + secondPart;
 }
 
-void AudioBuffer::debug() {
+void CircularBuffer::debug() {
     Serial.printf("Current count: %d\n", count);
     Serial.printf("Available/taken: %d/%d\n", available(), taken());
 	for (int i = 0; i < capacity; i++) {
