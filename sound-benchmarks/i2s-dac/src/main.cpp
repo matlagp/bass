@@ -127,7 +127,7 @@ void dataIntakeTask(void *pvParameters) {
     // Send received data to the ring buffer
     while (xRingbufferSend(buffer, rxData, len, pdMS_TO_TICKS(100)) != pdTRUE) {
       // Serial.println("Failed to write bytes to buffer");
-      vTaskDelay(pdMS_TO_TICKS(100));
+      vTaskDelay(pdMS_TO_TICKS(1));
     }
   }
 
@@ -138,7 +138,7 @@ void i2sTask(void *pvParameters) {
   while (true) {
     size_t readSize;
     byte *data = (byte *)xRingbufferReceiveUpTo(buffer, &readSize,
-                                                pdMS_TO_TICKS(1000), 8192);
+                                                pdMS_TO_TICKS(100), 8192);
 
     if (data != NULL) {
       // Serial.printf("Read %d bytes:\n", readSize);
@@ -161,7 +161,7 @@ void i2sTask(void *pvParameters) {
       vRingbufferReturnItem(buffer, (void *)data);
     } else {
       // Serial.println("Failed to read data");
-      vTaskDelay(pdMS_TO_TICKS(100));
+      vTaskDelay(pdMS_TO_TICKS(1));
     }
   }
 }
