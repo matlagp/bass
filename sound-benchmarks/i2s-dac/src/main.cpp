@@ -17,8 +17,10 @@ const char *pwd = "...";
 bool connected = false;
 RingbufHandle_t buffer;
 
-void udpServerTask(void *pvParameters) {
-  byte rxBuffer[512];
+void dataIntakeTask(void *);
+
+void tcpServerTask(void *pvParameters) {
+  // byte rxBuffer[512];
   sockaddr_in localAddress;
 
   // Configure IPv4 address
@@ -26,7 +28,7 @@ void udpServerTask(void *pvParameters) {
   localAddress.sin_family = AF_INET;
   localAddress.sin_port = htons(2137);
 
-  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+  int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
   if (sock < 1) {
     Serial.printf("Unable to create socket, error code: %d\n", errno);
     vTaskDelete(NULL);
@@ -41,23 +43,70 @@ void udpServerTask(void *pvParameters) {
   }
   Serial.println("Socket bound successfully");
 
+  if (listen(sock, 2) != 0) {
+    Serial.printf("Unable to listen on socket, error code: %d\n", errno);
+    vTaskDelete(NULL);
+    return;
+  }
+  Serial.println("Socket listening");
+
   while (true) {
     sockaddr_in remoteAddress;
     socklen_t socklen = sizeof(remoteAddress);
 
-    int len = recvfrom(sock, rxBuffer, sizeof(rxBuffer), 0,
-                       (sockaddr *)&remoteAddress, &socklen);
-
-    if (len < 0) {
-      Serial.printf("recvfrom failed, error code: %d\n", errno);
+    int *remoteSock = new int;
+    *remoteSock = accept(sock, (sockaddr *)&remoteAddress, &socklen);
+    if (*remoteSock < 0) {
+      Serial.printf("Unable to accept connection, error code: %d\n", errno);
       continue;
     }
+    Serial.println("Got connection");
+
+    xTaskCreate(dataIntakeTask, "DataIntake", 1 << 12, (void *)remoteSock, 1,
+                NULL);
+
+    // int len = recvfrom(sock, rxBuffer, sizeof(rxBuffer), 0,
+    //                    (sockaddr *)&remoteAddress, &socklen);
+
+    // if (len < 0) {
+    //   Serial.printf("recvfrom failed, error code: %d\n", errno);
+    //   continue;
+    // }
     // Serial.printf("Received %d bytes\n", len);
 
     // Send received data to the ring buffer
-    while (xRingbufferSend(buffer, rxBuffer, len, pdMS_TO_TICKS(100)) !=
-           pdTRUE) {
-      Serial.println("Failed to write bytes to buffer");
+    // while (xRingbufferSend(buffer, rxBuffer, len, pdMS_TO_TICKS(100)) !=
+    //        pdTRUE) {
+    //   // Serial.println("Failed to write bytes to buffer");
+    //   vTaskDelay(pdMS_TO_TICKS(100));
+    // }
+  }
+
+  vTaskDelete(NULL);
+}
+
+void dataIntakeTask(void *pvParameters) {
+  int *remoteSock = (int *)pvParameters;
+  byte rxData[512];
+
+  while (true) {
+    int len = recv(*remoteSock, rxData, sizeof(rxData), 0);
+
+    if (len < 0) {
+      Serial.println("Error while receiving network data");
+      continue;
+    }
+
+    if (len == 0) {
+      Serial.println("Connection closed");
+      close(*remoteSock);
+      delete remoteSock;
+      break;
+    }
+
+    // Send received data to the ring buffer
+    while (xRingbufferSend(buffer, rxData, len, pdMS_TO_TICKS(100)) != pdTRUE) {
+      // Serial.println("Failed to write bytes to buffer");
       vTaskDelay(pdMS_TO_TICKS(100));
     }
   }
@@ -76,7 +125,7 @@ void i2sTask(void *pvParameters) {
       for (int i = 0; i < readSize; i++) {
         printf("%c", data[i]);
       }
-      printf("\n");
+      // printf("\n");
       vRingbufferReturnItem(buffer, (void *)data);
     } else {
       // Serial.println("Failed to read data");
@@ -91,7 +140,7 @@ static void WiFiEvent(WiFiEvent_t event) {
       Serial.print("WiFi connected! IP address: ");
       Serial.println(WiFi.localIP());
 
-      xTaskCreate(udpServerTask, "Server", 10000, NULL, 1, NULL);
+      xTaskCreate(tcpServerTask, "Server", 4096, NULL, 1, NULL);
       connected = true;
       break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
