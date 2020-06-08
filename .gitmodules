@@ -1,0 +1,3 @@
+[submodule "pairing/lib/pubsubclient"]
+	path = pairing/lib/pubsubclient
+	url = git@github.com:knolleary/pubsubclient.git
