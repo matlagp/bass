@@ -3,118 +3,138 @@
 #endif
 
 #include <Arduino.h>
-#include <Wire.h>
-#include <FS.h>
-#include <SPIFFS.h>
-#include <HTTPClient.h>
-#include <WiFiClient.h>
 #include <WiFi.h>
-#include <AsyncUDP.h>
-#include <SD.h>
-#include "AudioGeneratorAAC.h"
-#include "AudioGeneratorWAV.h"
-#include "AudioGeneratorRaw.h"
-#include "AudioOutputI2S.h"
-#include "AudioFileSourcePROGMEM.h"
-#include "casio.h"
-#include "WM8960.h"
-#include "CircularBuffer.h"
-#include "AudioFileSourceRAM.h"
+#include <Wire.h>
 
-// AudioFileSourcePROGMEM *in;
-AudioFileSourceRAM *in;
-AudioGeneratorRaw *aac;
-AudioOutputI2S *out;
-AsyncUDP wifiudp;
-CircularBuffer buffer = CircularBuffer(65565);
+#include "FreeRTOS.h"
+#include "WM8960.h"
+#include "freertos/ringbuf.h"
+#include "lwip/sockets.h"
 
 const char *ssid = "...";
 const char *pwd = "...";
 
 bool connected = false;
+RingbufHandle_t buffer;
+
+void udpServerTask(void *pvParameters) {
+  byte rxBuffer[512];
+  sockaddr_in localAddress;
+
+  // Configure IPv4 address
+  localAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+  localAddress.sin_family = AF_INET;
+  localAddress.sin_port = htons(2137);
+
+  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+  if (sock < 1) {
+    Serial.printf("Unable to create socket, error code: %d\n", errno);
+    vTaskDelete(NULL);
+    return;
+  }
+  Serial.println("Socket created successfully");
+
+  if (bind(sock, (sockaddr *)&localAddress, sizeof(localAddress)) < 0) {
+    Serial.printf("Unable to bind socket, error code: %d\n", errno);
+    vTaskDelete(NULL);
+    return;
+  }
+  Serial.println("Socket bound successfully");
+
+  while (true) {
+    sockaddr_in remoteAddress;
+    socklen_t socklen = sizeof(remoteAddress);
+
+    int len = recvfrom(sock, rxBuffer, sizeof(rxBuffer), 0,
+                       (sockaddr *)&remoteAddress, &socklen);
+
+    if (len < 0) {
+      Serial.printf("recvfrom failed, error code: %d\n", errno);
+      continue;
+    }
+    // Serial.printf("Received %d bytes\n", len);
+
+    // Send received data to the ring buffer
+    while (xRingbufferSend(buffer, rxBuffer, len, pdMS_TO_TICKS(100)) !=
+           pdTRUE) {
+      Serial.println("Failed to write bytes to buffer");
+      vTaskDelay(pdMS_TO_TICKS(100));
+    }
+  }
+
+  vTaskDelete(NULL);
+}
+
+void i2sTask(void *pvParameters) {
+  while (true) {
+    size_t readSize;
+    byte *data = (byte *)xRingbufferReceiveUpTo(buffer, &readSize,
+                                                pdMS_TO_TICKS(1000), 128);
+
+    if (data != NULL) {
+      // Serial.printf("Read %d bytes:\n", readSize);
+      for (int i = 0; i < readSize; i++) {
+        printf("%c", data[i]);
+      }
+      printf("\n");
+      vRingbufferReturnItem(buffer, (void *)data);
+    } else {
+      // Serial.println("Failed to read data");
+      vTaskDelay(pdMS_TO_TICKS(100));
+    }
+  }
+}
 
 static void WiFiEvent(WiFiEvent_t event) {
-    switch(event) {
-        case SYSTEM_EVENT_STA_GOT_IP:
-            Serial.print("WiFi connected! IP address: ");
-            Serial.println(WiFi.localIP());  
+  switch (event) {
+    case SYSTEM_EVENT_STA_GOT_IP:
+      Serial.print("WiFi connected! IP address: ");
+      Serial.println(WiFi.localIP());
 
-
-            if (wifiudp.listen(2137)) {
-                Serial.println("UDP server up");
-                wifiudp.onPacket([](AsyncUDPPacket packet) {
-                    Serial.print("Received packet of size ");
-                    Serial.println(packet.length());
-                    Serial.print("From ");
-                    IPAddress remoteIp = packet.remoteIP();
-                    Serial.print(remoteIp);
-                    Serial.print(", port ");
-                    Serial.println(packet.remotePort());
-
-                    if (packet.length() > 0) {
-                        int s = buffer.push(packet.data(), packet.length());
-                        Serial.printf("Wrote %d bytes\n", s);
-                        // buffer.debug();
-                    }
-                });
-            }
-            connected = true;
-            break;
-        case SYSTEM_EVENT_STA_DISCONNECTED:
-            Serial.println("WiFi lost connection");
-            connected = false;
-            break;
-        default: break;
-    }
+      xTaskCreate(udpServerTask, "Server", 10000, NULL, 1, NULL);
+      connected = true;
+      break;
+    case SYSTEM_EVENT_STA_DISCONNECTED:
+      Serial.println("WiFi lost connection");
+      connected = false;
+      break;
+    default:
+      break;
+  }
 }
 
-void connectToWiFi(const char * ssid, const char * pwd) {
-    Serial.println("Connecting to WiFi network: " + String(ssid));
-    WiFi.disconnect(true);
-    WiFi.onEvent(WiFiEvent);
-    WiFi.begin(ssid, pwd);
-    Serial.println("Waiting for WIFI connection...");
-}
-
-void setupAudioChain() {
-    audioLogger = &Serial;
-
-    in = new AudioFileSourceRAM(&buffer);
-    aac = new AudioGeneratorRaw();
-    // in = new AudioFileSourcePROGMEM(casio, sizeof(casio));
-    // aac = new AudioGeneratorWAV();
-    out = new AudioOutputI2S(0, AudioOutputI2S::EXTERNAL_I2S, 8, 1);
-
-    out->SetBitsPerSample(16);
-    out->SetChannels(2);
-    out->SetRate(44100);
-    out->SetOutputModeMono(false);
-    out->SetPinout(I2S_CLK, I2S_WS, I2S_TXSDA);
-
-    aac->begin(in, out);
+void connectToWiFi(const char *ssid, const char *pwd) {
+  Serial.println("Connecting to WiFi network: " + String(ssid));
+  WiFi.disconnect(true);
+  WiFi.onEvent(WiFiEvent);
+  WiFi.begin(ssid, pwd);
+  Serial.println("Waiting for WIFI connection...");
 }
 
 void setup() {
-    Serial.begin(9600);
-    Wire.begin(I2C_SDA, I2C_SCL);
+  Serial.begin(9600);
+  Wire.begin(I2C_SDA, I2C_SCL);
 
-    byte wm_init_result = WM8960.begin();
-    if (wm_init_result == 0) {
-        Serial.printf("DAC initialized successfully\n");
-    } else {
-        Serial.printf("DAC initialization failed: %d\n", wm_init_result);
-    }
+  byte wm_init_result = WM8960.begin();
+  if (wm_init_result == 0) {
+    Serial.printf("DAC initialized successfully\n");
+  } else {
+    Serial.printf("DAC initialization failed: %d\n", wm_init_result);
+  }
 
-    buffer.clear();
+  buffer = xRingbufferCreate(1 << 12, RINGBUF_TYPE_BYTEBUF);
+  xRingbufferPrintInfo(buffer);
 
-    connectToWiFi(ssid, pwd);
-    setupAudioChain();
+  connectToWiFi(ssid, pwd);
+
+  xTaskCreate(i2sTask, "I2S", 10000, NULL, 1, NULL);
 }
 
 void loop() {
-    if (!connected) return;
+  if (!connected) return;
 
-    if (aac->isRunning()) {
-        aac->loop();
-    }
+  while (true) {
+    // Serial.println("Loop task");
+    delay(1000);
+  }
 }
