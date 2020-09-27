@@ -1,22 +1,21 @@
 #include <Arduino.h>
 #include <wm8960.h>
+#include <sine.h>
 
 void setup()
 {
   Serial.begin(9600);
-  Serial.println("\nI2C Scanner");
   wm8960_init();
+  init_i2s();
 }
+
+int test_bits = 16;
 
 void loop()
 {
-  uint8_t vol = 0;
-  while (1)
-  {
-    wm8960_set_vol(vol);
-    uint8_t new_vol;
-    wm8960_get_volume(&new_vol);
-    Serial.println(new_vol);
-    vol++;
-  }
+  setup_triangle_sine_waves(test_bits);
+  delay(5000);
+  test_bits += 8;
+  if (test_bits > 32)
+    test_bits = 16;
 }
