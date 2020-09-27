@@ -6,7 +6,6 @@
 #include "esp_log.h"
 
 #include "wm8960.h"
-
 static const char *TAG = "WM8960";
 
 static uint8_t volume;

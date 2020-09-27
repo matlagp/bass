@@ -1,12 +1,22 @@
 #include <Arduino.h>
-#include "wm8960.h"
+#include <wm8960.h>
 
 void setup()
 {
-  // put your setup code here, to run once:
+  Serial.begin(9600);
+  Serial.println("\nI2C Scanner");
+  wm8960_init();
 }
 
 void loop()
 {
-  // put your main code here, to run repeatedly:
+  uint8_t vol = 0;
+  while (1)
+  {
+    wm8960_set_vol(vol);
+    uint8_t new_vol;
+    wm8960_get_volume(&new_vol);
+    Serial.println(new_vol);
+    vol++;
+  }
 }
