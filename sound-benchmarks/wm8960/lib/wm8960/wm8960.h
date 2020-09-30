@@ -16,7 +16,7 @@ extern "C"
 #define SDA_PIN GPIO_NUM_21
 #define SCL_PIN GPIO_NUM_22
 
-#define I2C_BUS_NO I2C_NUM_0
+#define I2C_BUS_NO I2C_NUM_1
 
 // This is what Wikipedia says (https://en.wikipedia.org/wiki/I%C2%B2C)
 #define ACK_VAL 0

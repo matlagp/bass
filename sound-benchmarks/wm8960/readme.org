@@ -1,0 +1,7 @@
+* Problemy z I2C
+
+ 1. Wstępny proces konfiguracji przebiega ok.
+ 2. Zmiana ustawień kończy się niepowodzeniem
+ 3. Nie ma wpływu szybkość zegara
+
+Problemem jest interfejs I2S...
