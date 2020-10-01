@@ -65,7 +65,7 @@ void init_i2s()
       .communication_format = I2S_COMM_FORMAT_STAND_MSB,
       .dma_buf_count = 6,
       .dma_buf_len = 60,
-      .use_apll = true,
+      .use_apll = false,
       .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1 //Interrupt level 1
   };
   i2s_pin_config_t pin_config = {
@@ -77,9 +77,8 @@ void init_i2s()
 
   i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL);
   i2s_set_pin(I2S_NUM, &pin_config);
-  i2s_set_pin(0, &pin_config);
 
   //enable MCLK on GPIO0
-  REG_WRITE(PIN_CTRL, 0xFF0);
-  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);
+  // REG_WRITE(PIN_CTRL, 0xFF0);
+  // PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);
 }

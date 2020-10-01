@@ -190,17 +190,16 @@ esp_err_t wm8960_init()
   esp_err_t ret = 0;
 
   wm8960_i2c_init();
-  for (int j = 0; j < 100; j++)
-    for (int i = 0; i < sizeof(wm8960_reg_defaults) / sizeof(uint16_t); i += 2)
+  for (int i = 0; i < sizeof(wm8960_reg_defaults) / sizeof(uint16_t); i += 2)
+  {
+    // printf("[%d] %x %x\n", i, wm8960_reg_defaults[i], wm8960_reg_defaults[i + 1]);
+    ret = write_register_i2c(CODEC_ADDR, wm8960_reg_defaults[i], wm8960_reg_defaults[i + 1]);
+    if (ret != 0)
     {
-      // printf("[%d] %x %x\n", i, wm8960_reg_defaults[i], wm8960_reg_defaults[i + 1]);
-      ret = write_register_i2c(CODEC_ADDR, wm8960_reg_defaults[i], wm8960_reg_defaults[i + 1]);
-      if (ret != 0)
-      {
-        ESP_LOGE(TAG, "Error: %d", ret);
-        return ret;
-      }
+      ESP_LOGE(TAG, "Error: %d", ret);
+      return ret;
     }
+  }
 
   /*
     ret |= write_register_i2c(CODEC_ADDR, 0x00, 0x00);    // Reset

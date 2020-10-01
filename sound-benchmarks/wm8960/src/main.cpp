@@ -6,17 +6,18 @@
 void TaskI2C(void *pvParameters)
 {
   wm8960_init();
-  // init_i2s();
-  // setup_triangle_sine_waves(16);
+  wm8960_set_vol(255);
+
+  init_i2s();
+  setup_triangle_sine_waves(16);
 
   for (;;)
   {
-    wm8960_set_vol(255);
     esp_err_t rc;
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    rc = wm8960_set_mute(true);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    rc = wm8960_set_mute(false);
+    // rc = wm8960_set_mute(true);
+    // vTaskDelay(1000 / portTICK_PERIOD_MS);
+    // rc = wm8960_set_mute(false);
   }
 }
 
