@@ -13,8 +13,8 @@ extern "C"
 {
 #endif
 
-#define SDA_PIN GPIO_NUM_21
-#define SCL_PIN GPIO_NUM_22
+#define SDA_PIN GPIO_NUM_18
+#define SCL_PIN GPIO_NUM_19
 
 #define I2C_BUS_NO I2C_NUM_1
 

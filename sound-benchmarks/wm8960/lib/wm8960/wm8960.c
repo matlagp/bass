@@ -24,7 +24,7 @@ static void wm8960_i2c_init()
   // ESP_LOGI(TAG, "Configuring I2C");
   rc = i2c_param_config(I2C_BUS_NO, &i2c_conf);
   // ESP_LOGD(TAG, "I2C Param Config: %s", esp_err_to_name(rc));
-  rc = i2c_driver_install(I2C_BUS_NO, I2C_MODE_MASTER, 0, 0, 0);
+  rc = i2c_driver_install(I2C_BUS_NO, I2C_MODE_MASTER, 0, 0, ESP_INTR_FLAG_LEVEL1);
   // ESP_LOGD(TAG, "I2C Driver Install; %s", esp_err_to_name(rc));
 }
 
