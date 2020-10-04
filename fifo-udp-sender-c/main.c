@@ -6,10 +6,11 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #define SERVER "192.168.11.230"
-#define BUFLEN 3200
+#define BUFLEN 500
 #define PORT 8888
 
 void die(char *s)
@@ -17,7 +18,6 @@ void die(char *s)
     perror(s);
     exit(1);
 }
-
 
 int main(void) {
     struct sockaddr_in client;
@@ -44,16 +44,34 @@ int main(void) {
         die("fifo");
     }
 
-    for (int j = 0; j < 441; j++) {
-        ssize_t read_bytes = 0;
-        do {
-            read_bytes += read(fifo, &message[read_bytes], BUFLEN - read_bytes);
-        } while (read_bytes < BUFLEN);
+    for (int i = 0; i < 10000; i++) {
+        struct timespec start, end;
+        clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
-        //printf("Sending\n");
-        if (sendto(s, message, strlen(message) , 0 , (struct sockaddr *) &client, slen)==-1)
-        {
-            die("sendto()");
+        for (int j = 0; j < 352; j++) {
+            ssize_t read_bytes = 0;
+            do {
+                read_bytes += read(fifo, &message[read_bytes], BUFLEN - read_bytes);
+            } while (read_bytes < BUFLEN);
+
+            for (int k = 0; k < BUFLEN; k++) {
+                putchar(message[k]);
+            }
+
+            if (sendto(s, message, BUFLEN, 0 , (struct sockaddr *) &client, slen)==-1)
+            {
+                die("sendto()");
+            }
+
+            while (1) {
+                clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+                uint64_t delta_ns = (end.tv_sec - start.tv_sec) * 1000000000 + (end.tv_nsec - start.tv_nsec);
+                if (delta_ns > j * 2840909) {
+                    break;
+                }
+            }
         }
+        /* clock_gettime(CLOCK_MONOTONIC_RAW, &end); */
+        /* uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000; */
     }
 }
