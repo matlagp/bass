@@ -114,6 +114,8 @@ void i2sTask(void *pvParameters)
   StretchHandle stretcher = stretch_init(min_period, max_period, 2, 1);
   uint8_t tx_stretched[(125 * 2 + (44100 / 55) * 3) * 4];
 
+  int isFilling = true;
+
   for (;;)
   {
     uint8_t *tx = (uint8_t *)xRingbufferReceive(buffer, &bytes_written, portMAX_DELAY);
@@ -127,22 +129,16 @@ void i2sTask(void *pvParameters)
 
     if (buffer_size > 22000)
     {
-      size_t samples_generated = stretch_samples(stretcher, (short *)tx, 500 / 4, (short *)tx_stretched, 2);
-
-      if (samples_generated != 0)
-      {
-        i2s_write(I2S_NUM_0, tx_stretched, samples_generated * 4, &bytes_written, portMAX_DELAY);
-      }
-      else
-      {
-        i2s_write(I2S_NUM_0, tx, 500, &bytes_written, portMAX_DELAY);
-      }
-
-      vRingbufferReturnItem(buffer, tx);
+      isFilling = true;
     }
-    else if (buffer_size < 3000)
+    else if (buffer_size < 12000)
     {
-      size_t samples_generated = stretch_samples(stretcher, (short *)tx, 500 / 4, (short *)tx_stretched, 0.75);
+      isFilling = false;
+    }
+
+    if (isFilling)
+    {
+      size_t samples_generated = stretch_samples(stretcher, (short *)tx, 500 / 4, (short *)tx_stretched, 2);
 
       if (samples_generated != 0)
       {
