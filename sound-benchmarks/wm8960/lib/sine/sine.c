@@ -63,8 +63,8 @@ void init_i2s()
       .bits_per_sample = 16,
       .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT, //2-channels
       .communication_format = I2S_COMM_FORMAT_STAND_MSB,
-      .dma_buf_count = 6,
-      .dma_buf_len = 60,
+      .dma_buf_count = 5,
+      .dma_buf_len = 50, // in SAMPLES
       .use_apll = false,
       .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1 //Interrupt level 1
   };

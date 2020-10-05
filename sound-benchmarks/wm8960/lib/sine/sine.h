@@ -11,7 +11,7 @@ extern "C"
 
 #define I2S_COMM_FORMAT_STAND_MSB 0x03
 
-#define SAMPLE_RATE (36000)
+#define SAMPLE_RATE (44100)
 #define I2S_NUM (0)
 #define WAVE_FREQ_HZ (100)
 #define I2S_BCK_IO (GPIO_NUM_13)

@@ -1,80 +1,71 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiUdp.h>
 #include "wm8960.h"
+#include "sine.h"
 
-#include "AudioFileSourcePROGMEM.h"
-#include "AudioGeneratorWAV.h"
-#include "AudioOutputI2SNoDAC.h"
+void connectToWiFi(const char *ssid, const char *pwd);
+void WiFiEvent(WiFiEvent_t event);
 
-#include "viola.h"
+const char *ssid = "...";
+const char *pwd = "...";
 
-AudioGeneratorWAV *wav;
-AudioFileSourcePROGMEM *file;
-AudioOutputI2S *out;
-
-void TaskI2C(void *pvParameters)
-{
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-  wm8960_set_vol(255);
-  for (;;)
-  {
-    bool ret;
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    ret = out->SetOutputModeMono(true);
-    Serial.printf("MONO: %d", ret);
-    // rc = wm8960_set_mute(true);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    out->SetOutputModeMono(false);
-    Serial.printf("STEREO: %d", ret);
-    // rc = wm8960_set_mute(false);
-  }
-}
+WiFiUDP udp;
+uint8_t rx[500];
+bool connected = false;
 
 void setup()
 {
-  WiFi.mode(WIFI_OFF);
   Serial.begin(9600);
   wm8960_init();
   wm8960_set_vol(255);
-  delay(1000);
+  connectToWiFi(ssid, pwd);
 
-  Serial.printf("WAV start\n");
-
-  audioLogger = &Serial;
-  file = new AudioFileSourcePROGMEM(viola, sizeof(viola));
-  out = new AudioOutputI2S(I2S_NUM_0, 0, 32, 0);
-  wav = new AudioGeneratorWAV();
-  wav->begin(file, out);
-
-  xTaskCreate(TaskI2C, "I2CTask", 2048, NULL, 2, NULL);
+  init_i2s();
 }
 
 void loop()
 {
-  if (wav->isRunning())
+  if (!connected)
+    return;
+
+  if (udp.parsePacket() > 0)
   {
-    if (!wav->loop())
+    size_t bytes_written;
+    udp.read(rx, 500);
+    for (int i = 0; i < 5; i++)
     {
-      wav->stop();
-      file = new AudioFileSourcePROGMEM(viola, sizeof(viola));
-      wav->begin(file, out);
+      i2s_write(I2S_NUM_0, rx + 100 * i, 100, &bytes_written, 100);
     }
-  }
-  else
-  {
-    Serial.printf("WAV done\n");
-    delay(1000);
   }
 }
 
-// void setup()
-// {
-//   Serial.begin(9600);
+void connectToWiFi(const char *ssid, const char *pwd)
+{
+  Serial.println("Connecting to WiFi network: " + String(ssid));
+  WiFi.disconnect(true);
+  WiFi.onEvent(WiFiEvent);
+  WiFi.begin(ssid, pwd);
+  Serial.println("Waiting for WIFI connection...");
+}
 
-//   xTaskCreate(TaskI2C, "I2CTask", 2048, NULL, 2, NULL);
-// }
+void WiFiEvent(WiFiEvent_t event)
+{
+  switch (event)
+  {
+  case SYSTEM_EVENT_STA_GOT_IP:
+    Serial.print("WiFi connected! IP address: ");
+    Serial.println(WiFi.localIP());
 
-// void loop()
-// {
-// }
+    udp.begin(2137);
+    connected = true;
+
+    break;
+  case SYSTEM_EVENT_STA_DISCONNECTED:
+    Serial.println("WiFi lost connection");
+    connected = false;
+    break;
+  default:
+    break;
+  }
+}
