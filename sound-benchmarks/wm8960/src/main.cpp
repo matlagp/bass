@@ -127,7 +127,7 @@ void i2sTask(void *pvParameters)
 
     if (buffer_size > 22000)
     {
-      size_t samples_generated = stretch_samples(stretcher, (short *)tx, 500 / 4, (short *)tx_stretched, 1.5);
+      size_t samples_generated = stretch_samples(stretcher, (short *)tx, 500 / 4, (short *)tx_stretched, 2);
 
       if (samples_generated != 0)
       {
