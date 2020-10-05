@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <FreeRTOS.h>
+#include <freertos/ringbuf.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include "wm8960.h"
@@ -7,12 +9,17 @@
 void connectToWiFi(const char *ssid, const char *pwd);
 void WiFiEvent(WiFiEvent_t event);
 
+void receiveTask(void *);
+void i2sTask(void *);
+
 const char *ssid = "...";
 const char *pwd = "...";
 
 WiFiUDP udp;
 uint8_t rx[500];
 bool connected = false;
+
+RingbufHandle_t buffer;
 
 void setup()
 {
@@ -22,22 +29,32 @@ void setup()
   connectToWiFi(ssid, pwd);
 
   init_i2s();
+
+  buffer = xRingbufferCreate(100000, RINGBUF_TYPE_NOSPLIT);
+  if (buffer == NULL)
+  {
+    Serial.println("Failed to create ring buffer");
+  }
+
+  xTaskCreate(
+      receiveTask,
+      "receiveTask",
+      (1 << 13),
+      NULL,
+      2,
+      NULL);
+
+  xTaskCreate(
+      i2sTask,
+      "i2sTask",
+      1024,
+      NULL,
+      2,
+      NULL);
 }
 
 void loop()
 {
-  if (!connected)
-    return;
-
-  if (udp.parsePacket() > 0)
-  {
-    size_t bytes_written;
-    udp.read(rx, 500);
-    for (int i = 0; i < 5; i++)
-    {
-      i2s_write(I2S_NUM_0, rx + 100 * i, 100, &bytes_written, 100);
-    }
-  }
 }
 
 void connectToWiFi(const char *ssid, const char *pwd)
@@ -67,5 +84,43 @@ void WiFiEvent(WiFiEvent_t event)
     break;
   default:
     break;
+  }
+}
+
+void receiveTask(void *pvParameters)
+{
+  for (;;)
+  {
+    if (!WiFi.isConnected())
+    {
+      continue;
+    }
+
+    if (udp.parsePacket() > 0)
+    {
+      udp.read(rx, 500);
+      xRingbufferSend(buffer, rx, 500, 100);
+    }
+  }
+}
+
+void i2sTask(void *pvParameters)
+{
+  size_t bytes_written;
+  for (;;)
+  {
+    uint8_t *tx = (uint8_t *)xRingbufferReceive(buffer, &bytes_written, portMAX_DELAY);
+    if (tx == NULL)
+    {
+      Serial.println("Failed to receive item");
+      continue;
+    }
+
+    for (int i = 0; i < 5; i++)
+    {
+      i2s_write(I2S_NUM_0, tx + 100 * i, 100, &bytes_written, portMAX_DELAY);
+    }
+
+    vRingbufferReturnItem(buffer, tx);
   }
 }

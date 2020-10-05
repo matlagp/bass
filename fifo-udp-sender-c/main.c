@@ -9,9 +9,9 @@
 #include <time.h>
 #include <unistd.h>
 
-#define SERVER "192.168.11.230"
+#define SERVER "192.168.11.117"
 #define BUFLEN 500
-#define PORT 8888
+#define PORT 2137
 
 void die(char *s)
 {
