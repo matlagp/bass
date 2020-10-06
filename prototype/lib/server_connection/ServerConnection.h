@@ -20,6 +20,6 @@ private:
 
     ServerConnection();
     void loop();
-    static void loop(void*);
-    static void handleMqttMessage(char*, byte*, unsigned int);
+    static void loop(void *);
+    static void handleMqttMessage(char *, byte *, unsigned int);
 };

@@ -6,9 +6,9 @@
 
 ServerConnection::ServerConnection()
 {
-  snprintf(name, 14, "node-%08X", (uint32_t) (ESP.getEfuseMac() >> 16));
-  snprintf(topic_state, 30, "/nodes/%08X/state", (uint32_t) (ESP.getEfuseMac() >> 16));
-  snprintf(topic_settings, 35, "/nodes/%08X/settings/#", (uint32_t) (ESP.getEfuseMac() >> 16));
+  snprintf(name, 14, "node-%08X", (uint32_t)(ESP.getEfuseMac() >> 16));
+  snprintf(topic_state, 30, "/nodes/%08X/state", (uint32_t)(ESP.getEfuseMac() >> 16));
+  snprintf(topic_settings, 35, "/nodes/%08X/settings/#", (uint32_t)(ESP.getEfuseMac() >> 16));
 }
 
 void ServerConnection::loop_forever()
@@ -65,9 +65,12 @@ void ServerConnection::loop()
         Serial.printf("WHAT: ");
       }
 
-      if (type != '2') {
+      if (type != '2')
+      {
         Serial.println(data);
-      } else {
+      }
+      else
+      {
         Serial.println("******");
       }
 
@@ -103,6 +106,7 @@ void ServerConnection::loop()
     // Back to BT
     if (setupStep == 3 && retries < 0)
     {
+      WiFi.disconnect();
       Serial.println("Connecting to WiFi failed");
       setupStep = 0;
     }
