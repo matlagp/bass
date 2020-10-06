@@ -118,10 +118,11 @@ void i2sTask(void *pvParameters)
 
   for (;;)
   {
-    uint8_t *tx = (uint8_t *)xRingbufferReceive(buffer, &bytes_written, portMAX_DELAY);
+    uint8_t *tx = (uint8_t *)xRingbufferReceive(buffer, &bytes_written, 10);
     if (tx == NULL)
     {
-      Serial.println("Failed to receive item");
+      memset(tx_stretched, 0, 500);
+      i2s_write(I2S_NUM_0, tx_stretched, 500, &bytes_written, portMAX_DELAY);
       continue;
     }
 
