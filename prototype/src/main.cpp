@@ -4,35 +4,18 @@
 #include "ServerConnection.h"
 
 #include "FreeRTOS.h"
-#include "WM8960.h"
+#include "wm8960.h"
+#include "i2s_setup.h"
 #include "driver/i2s.h"
 #include "freertos/ringbuf.h"
 #include "lwip/sockets.h"
-
-static const i2s_port_t i2s_num = I2S_NUM_0;  // i2s port number
-
-static const i2s_config_t i2s_config = {
-    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN),
-    .sample_rate = 44100,
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT, /* the DAC module will only
-                                                     take the 8bits from MSB */
-    .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-    .communication_format = I2S_COMM_FORMAT_I2S_MSB,
-    .intr_alloc_flags = 0,  // default interrupt priority
-    .dma_buf_count = 8,
-    .dma_buf_len = 64,
-    .use_apll = false};
-
-static const i2s_pin_config_t pin_config = {.bck_io_num = I2S_CLK,
-                                            .ws_io_num = I2S_WS,
-                                            .data_out_num = I2S_TXSDA,
-                                            .data_in_num = I2S_PIN_NO_CHANGE};
 
 RingbufHandle_t buffer;
 
 void dataIntakeTask(void *);
 
-void tcpServerTask(void *pvParameters) {
+void tcpServerTask(void *pvParameters)
+{
   // byte rxBuffer[512];
   sockaddr_in localAddress;
 
@@ -42,34 +25,39 @@ void tcpServerTask(void *pvParameters) {
   localAddress.sin_port = htons(2137);
 
   int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
-  if (sock < 1) {
+  if (sock < 1)
+  {
     Serial.printf("Unable to create socket, error code: %d\n", errno);
     vTaskDelete(NULL);
     return;
   }
   Serial.println("Socket created successfully");
 
-  if (bind(sock, (sockaddr *)&localAddress, sizeof(localAddress)) < 0) {
+  if (bind(sock, (sockaddr *)&localAddress, sizeof(localAddress)) < 0)
+  {
     Serial.printf("Unable to bind socket, error code: %d\n", errno);
     vTaskDelete(NULL);
     return;
   }
   Serial.println("Socket bound successfully");
 
-  if (listen(sock, 2) != 0) {
+  if (listen(sock, 2) != 0)
+  {
     Serial.printf("Unable to listen on socket, error code: %d\n", errno);
     vTaskDelete(NULL);
     return;
   }
   Serial.println("Socket listening");
 
-  while (true) {
+  while (true)
+  {
     sockaddr_in remoteAddress;
     socklen_t socklen = sizeof(remoteAddress);
 
     int *remoteSock = new int;
     *remoteSock = accept(sock, (sockaddr *)&remoteAddress, &socklen);
-    if (*remoteSock < 0) {
+    if (*remoteSock < 0)
+    {
       Serial.printf("Unable to accept connection, error code: %d\n", errno);
       continue;
     }
@@ -98,19 +86,23 @@ void tcpServerTask(void *pvParameters) {
   vTaskDelete(NULL);
 }
 
-void dataIntakeTask(void *pvParameters) {
+void dataIntakeTask(void *pvParameters)
+{
   int *remoteSock = (int *)pvParameters;
   byte rxData[4096];
 
-  while (true) {
+  while (true)
+  {
     int len = recv(*remoteSock, rxData, sizeof(rxData), 0);
 
-    if (len < 0) {
+    if (len < 0)
+    {
       Serial.println("Error while receiving network data");
       continue;
     }
 
-    if (len == 0) {
+    if (len == 0)
+    {
       Serial.println("Connection closed");
       close(*remoteSock);
       delete remoteSock;
@@ -118,7 +110,8 @@ void dataIntakeTask(void *pvParameters) {
     }
 
     // Send received data to the ring buffer
-    while (xRingbufferSend(buffer, rxData, len, pdMS_TO_TICKS(100)) != pdTRUE) {
+    while (xRingbufferSend(buffer, rxData, len, pdMS_TO_TICKS(100)) != pdTRUE)
+    {
       // Serial.println("Failed to write bytes to buffer");
       vTaskDelay(pdMS_TO_TICKS(1));
     }
@@ -127,13 +120,16 @@ void dataIntakeTask(void *pvParameters) {
   vTaskDelete(NULL);
 }
 
-void i2sTask(void *pvParameters) {
-  while (true) {
+void i2sTask(void *pvParameters)
+{
+  while (true)
+  {
     size_t readSize;
     byte *data = (byte *)xRingbufferReceiveUpTo(buffer, &readSize,
                                                 pdMS_TO_TICKS(100), 4096);
 
-    if (data != NULL) {
+    if (data != NULL)
+    {
       // Serial.printf("Read %d bytes:\n", readSize);
       // for (int i = 0; i < readSize; i++) {
       //   printf("%c", data[i]);
@@ -141,45 +137,44 @@ void i2sTask(void *pvParameters) {
       // printf("\n");
 
       size_t writtenSize = 0;
-      while (writtenSize < readSize) {
+      while (writtenSize < readSize)
+      {
         esp_err_t err =
-            i2s_write(i2s_num, data + writtenSize, readSize - writtenSize,
+            i2s_write(I2S_NUM_0, data + writtenSize, readSize - writtenSize,
                       &writtenSize, pdMS_TO_TICKS(100));
         // Serial.printf("Wrote %d bytes so far\n", writtenSize);
-        if (err) {
+        if (err)
+        {
           Serial.printf("Error while pushing data to DAC: %d\n", err);
         }
       }
 
       vRingbufferReturnItem(buffer, (void *)data);
-    } else {
+    }
+    else
+    {
       // Serial.println("Failed to read data");
       vTaskDelay(pdMS_TO_TICKS(1));
     }
   }
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
-  Wire.begin(I2C_SDA, I2C_SCL);
 
-  byte wm_init_result = WM8960.begin();
-  if (wm_init_result == 0) {
-    Serial.printf("DAC initialized successfully\n");
-  } else {
-    Serial.printf("DAC initialization failed: %d\n", wm_init_result);
-  }
+  wm8960_init();
+  wm8960_set_vol(255);
 
   buffer = xRingbufferCreate(1 << 14, RINGBUF_TYPE_BYTEBUF);
   xRingbufferPrintInfo(buffer);
 
-  i2s_driver_install(i2s_num, &i2s_config, 0, NULL);
-  i2s_set_pin(i2s_num, &pin_config);
-  i2s_set_sample_rates(i2s_num, 44100);
+  init_i2s();
 
   ServerConnection::loop_forever();
 
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     Serial.println("Not connected yet");
     delay(1000);
   }
@@ -189,8 +184,10 @@ void setup() {
   xTaskCreate(i2sTask, "I2S", 8192, NULL, 3, NULL);
 }
 
-void loop() {
-  while (true) {
+void loop()
+{
+  while (true)
+  {
     // Serial.println("Loop task");
     delay(1000);
   }
