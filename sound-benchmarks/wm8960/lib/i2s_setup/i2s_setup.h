@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <driver/i2s.h>
 
-#ifndef SINE_H
-#define SINE_H
+#ifndef I2S_SETUP_H
+#define I2S_SETUP_H
 
 #ifdef __cplusplus
 extern "C"
@@ -19,9 +19,10 @@ extern "C"
 #define I2S_DO_IO (GPIO_NUM_17)
 #define I2S_DI_IO (-1)
 
-#define SAMPLE_PER_CYCLE (SAMPLE_RATE / WAVE_FREQ_HZ)
+#define DMA_BUFFER_COUNT (15)
+#define DMA_BUFFER_LENGTH (50)
 
-  void setup_triangle_sine_waves(int bits);
+#define SAMPLE_PER_CYCLE (SAMPLE_RATE / WAVE_FREQ_HZ)
 
   void init_i2s();
 

@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include "wm8960.h"
-#include "sine.h"
+#include "i2s_setup.h"
 #include "stretch.h"
 
 void connectToWiFi(const char *ssid, const char *pwd);
@@ -31,7 +31,7 @@ void setup()
 
   init_i2s();
 
-  buffer = xRingbufferCreate(50000, RINGBUF_TYPE_NOSPLIT);
+  buffer = xRingbufferCreate(75000, RINGBUF_TYPE_NOSPLIT);
   if (buffer == NULL)
   {
     Serial.println("Failed to create ring buffer");
@@ -108,11 +108,11 @@ void receiveTask(void *pvParameters)
 void i2sTask(void *pvParameters)
 {
   size_t bytes_written;
-  int min_period = 44100 / 333;
-  int max_period = 44100 / 55;
+  int min_period = SAMPLE_RATE / 333;
+  int max_period = SAMPLE_RATE / 55;
 
   StretchHandle stretcher = stretch_init(min_period, max_period, 2, 1);
-  uint8_t tx_stretched[(125 * 2 + (44100 / 55) * 3) * 4];
+  uint8_t tx_stretched[(125 * 2 + (SAMPLE_RATE / 55) * 3) * 4];
 
   int isFilling = true;
 
@@ -139,7 +139,7 @@ void i2sTask(void *pvParameters)
 
     if (isFilling)
     {
-      size_t samples_generated = stretch_samples(stretcher, (short *)tx, 500 / 4, (short *)tx_stretched, 2);
+      size_t samples_generated = stretch_samples(stretcher, (short *)tx, 500 / 4, (short *)tx_stretched, 1.2);
 
       if (samples_generated != 0)
       {
