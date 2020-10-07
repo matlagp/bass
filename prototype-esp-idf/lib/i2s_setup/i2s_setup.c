@@ -20,8 +20,8 @@ void init_i2s()
       .data_in_num = I2S_DI_IO //Not used
   };
 
-  i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL);
-  i2s_set_pin(I2S_NUM, &pin_config);
+  ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL));
+  ESP_ERROR_CHECK(i2s_set_pin(I2S_NUM, &pin_config));
 
   //enable MCLK on GPIO0
   REG_WRITE(PIN_CTRL, 0xFF0);
