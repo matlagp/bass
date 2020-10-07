@@ -204,9 +204,25 @@ void waitingTask(void *params)
     if (uxBits & CONNECTED_BIT)
     {
       ESP_LOGI("wait", "WiFi Connected to ap");
-      xTaskCreate(udpTask, "udp_server", 4096, NULL, 5, NULL);
-      xTaskCreate(i2sTask, "i2s_task", 4096, NULL, 5, NULL);
-      xTaskCreate(mqttTask, "mqtt_task", 4096, NULL, 5, NULL);
+      TaskHandle_t xHandle = NULL;
+      xTaskCreate(udpTask, "udp_server", 4096, NULL, 5, &xHandle);
+      if (xHandle == NULL)
+      {
+        ESP_LOGE("udp", "Could not create task");
+        abort();
+      }
+      xTaskCreate(i2sTask, "i2s_task", 4096, NULL, 5, &xHandle);
+      if (xHandle == NULL)
+      {
+        ESP_LOGE("i2s", "Could not create task");
+        abort();
+      }
+      xTaskCreate(mqttTask, "mqtt_task", 4096, NULL, 5, &xHandle);
+      if (xHandle == NULL)
+      {
+        ESP_LOGE("mqtt", "Could not create task");
+        abort();
+      }
       vTaskDelete(NULL);
     }
   }
@@ -216,7 +232,13 @@ static void event_handler(void *arg, esp_event_base_t event_base,
 {
   if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
   {
-    xTaskCreate(waitingTask, "waitingTask", 4096, NULL, 3, NULL);
+    TaskHandle_t xHandle = NULL;
+    xTaskCreate(waitingTask, "waitingTask", 4096, NULL, 3, &xHandle);
+    if (xHandle == NULL)
+    {
+      ESP_LOGE("wait", "Could not create task");
+      abort();
+    }
   }
   else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
   {
