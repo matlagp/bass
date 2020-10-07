@@ -5,6 +5,8 @@
 #include <freertos/ringbuf.h>
 #include <esp_wifi.h>
 #include "nvs_flash.h"
+#include "lwip/sockets.h"
+#include "driver/i2s.h"
 
 RingbufHandle_t buffer;
 
@@ -27,6 +29,72 @@ void memTask(void *params)
   }
 }
 
+void udpTask(void *params)
+{
+  char rx[500];
+
+  for (;;)
+  {
+    struct sockaddr_in dest_addr;
+    dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(2137);
+
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+    if (sock < 0)
+    {
+      ESP_LOGE("udp", "Unable to create socket: errno %d", errno);
+      break;
+    }
+    ESP_LOGI("udp", "Socket created");
+
+    int err = bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    if (err < 0)
+    {
+      ESP_LOGE("udp", "Socket unable to bind: errno %d", errno);
+    }
+    ESP_LOGI("udp", "Socket bound, port 2137");
+
+    for (;;)
+    {
+      ESP_LOGI("udp", "Waiting for data");
+      int len = recvfrom(sock, rx, 500, 0, NULL, NULL);
+
+      if (len < 0)
+      {
+        ESP_LOGE("udp", "recvfrom failed: errno %d", errno);
+        break;
+      }
+      else
+      {
+        ESP_LOGI("udp", "recvfrom success");
+        xRingbufferSend(buffer, rx, 500, 100);
+      }
+    }
+  }
+  vTaskDelete(NULL);
+}
+
+void i2sTask(void *params)
+{
+  size_t bytes_written;
+  uint8_t tx_blank[500];
+  memset(tx_blank, 0, 500);
+
+  for (;;)
+  {
+    uint8_t *tx = (uint8_t *)xRingbufferReceive(buffer, &bytes_written, 10);
+    if (tx == NULL)
+    {
+      // i2s_write(I2S_NUM_0, tx_blank, 500, &bytes_written, portMAX_DELAY);
+      continue;
+    }
+    // i2s_write(I2S_NUM_0, tx, 500, &bytes_written, portMAX_DELAY);
+
+    vRingbufferReturnItem(buffer, tx);
+  }
+}
+
 void waitingTask(void *params)
 {
   EventBits_t uxBits;
@@ -38,11 +106,12 @@ void waitingTask(void *params)
     if (uxBits & CONNECTED_BIT)
     {
       ESP_LOGI("wait", "WiFi Connected to ap");
+      xTaskCreate(udpTask, "udp_server", 4096, NULL, 5, NULL);
+      xTaskCreate(i2sTask, "i2s_task", 4096, NULL, 5, NULL);
       vTaskDelete(NULL);
     }
   }
 }
-
 static void event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data)
 {
