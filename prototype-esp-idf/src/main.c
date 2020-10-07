@@ -8,6 +8,9 @@
 #include "lwip/sockets.h"
 #include "driver/i2s.h"
 
+#include "wm8960.h"
+#include "i2s_setup.h"
+
 RingbufHandle_t buffer;
 
 static EventGroupHandle_t s_wifi_event_group;
@@ -86,10 +89,10 @@ void i2sTask(void *params)
     uint8_t *tx = (uint8_t *)xRingbufferReceive(buffer, &bytes_written, 10);
     if (tx == NULL)
     {
-      // i2s_write(I2S_NUM_0, tx_blank, 500, &bytes_written, portMAX_DELAY);
+      i2s_write(I2S_NUM_0, tx_blank, 500, &bytes_written, portMAX_DELAY);
       continue;
     }
-    // i2s_write(I2S_NUM_0, tx, 500, &bytes_written, portMAX_DELAY);
+    i2s_write(I2S_NUM_0, tx, 500, &bytes_written, portMAX_DELAY);
 
     vRingbufferReturnItem(buffer, tx);
   }
@@ -170,4 +173,9 @@ void app_main()
 
   ESP_ERROR_CHECK(esp_wifi_start());
   ESP_ERROR_CHECK(esp_wifi_connect());
+
+  wm8960_init();
+  wm8960_set_vol(255);
+
+  init_i2s();
 }
