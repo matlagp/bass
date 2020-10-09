@@ -6,6 +6,8 @@
 #include "wm8960.h"
 #include "i2s_setup.h"
 
+#include "ring_buffer.h"
+
 #include "wifi_task.h"
 #include "udp_task.h"
 #include "i2s_task.h"
@@ -39,16 +41,7 @@ static void on_connected()
 void app_main()
 {
   xTaskCreate(memTask, "memTask", 4096, NULL, 5, NULL);
-  buffer = xRingbufferCreate(500 * 260, RINGBUF_TYPE_BYTEBUF);
-  if (buffer == NULL)
-  {
-    ESP_LOGE("buffer", "NULL");
-    abort();
-  }
-  else
-  {
-    ESP_LOGI("buffer", "%u", xRingbufferGetCurFreeSize(buffer));
-  }
+  buffer = createRingBuffer();
 
   createWifiTask(on_connected);
 
