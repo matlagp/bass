@@ -8,11 +8,6 @@
 #ifndef WM8960_H
 #define WM8960_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 #define SDA_PIN GPIO_NUM_18
 #define SCL_PIN GPIO_NUM_19
 
@@ -27,13 +22,9 @@ extern "C"
 
 #define CODEC_ADDR 0x1A
 
-  esp_err_t wm8960_init();
-  esp_err_t wm8960_set_vol(int vol);
-  esp_err_t wm8960_set_mute(bool mute);
-  esp_err_t wm8960_get_volume(uint8_t *vol);
-
-#ifdef __cplusplus
-}
-#endif
+esp_err_t wm8960_init();
+esp_err_t wm8960_set_vol(int vol);
+esp_err_t wm8960_set_mute(bool mute);
+esp_err_t wm8960_get_volume(uint8_t *vol);
 
 #endif

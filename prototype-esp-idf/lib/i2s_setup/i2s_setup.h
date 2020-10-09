@@ -3,11 +3,6 @@
 #ifndef I2S_SETUP_H
 #define I2S_SETUP_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 #define I2S_COMM_FORMAT_STAND_MSB 0x03
 
 #define SAMPLE_RATE (44100)
@@ -23,10 +18,6 @@ extern "C"
 
 #define SAMPLE_PER_CYCLE (SAMPLE_RATE / WAVE_FREQ_HZ)
 
-  void init_i2s();
-
-#ifdef __cplusplus
-}
-#endif
+void init_i2s();
 
 #endif

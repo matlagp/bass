@@ -7,7 +7,7 @@ xTaskHandle createMemoryDebugTask()
 {
   if (CONFIG_LOG_DEFAULT_LEVEL >= 3)
   {
-    ESP_LOGE(MEMORY_DEBUG_TASK_TAG, "Creating memory debug task");
+    ESP_LOGI(MEMORY_DEBUG_TASK_TAG, "Creating memory debug task");
 
     xTaskHandle xHandle = NULL;
     xTaskCreate(memoryDebugTask, MEMORY_DEBUG_TASK_TAG, 4096, NULL, 5, &xHandle);
