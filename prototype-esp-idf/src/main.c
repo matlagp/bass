@@ -1,11 +1,7 @@
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <freertos/event_groups.h>
 #include <freertos/ringbuf.h>
-#include <esp_wifi.h>
-#include <soc/efuse_reg.h>
-#include "nvs_flash.h"
 
 #include "wm8960.h"
 #include "i2s_setup.h"
