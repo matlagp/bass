@@ -2,6 +2,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/ringbuf.h>
 #include <freertos/task.h>
+#include "lwip/sockets.h"
 
 #ifndef UDP_TASK_H
 #define UDP_TASK_H

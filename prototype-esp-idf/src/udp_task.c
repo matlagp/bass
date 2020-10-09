@@ -1,4 +1,3 @@
-#include "lwip/sockets.h"
 #include "udp_task.h"
 
 static void udpTask(RingbufHandle_t buffer);
