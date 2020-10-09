@@ -73,7 +73,7 @@ void udpTask(void *params)
       else
       {
         ESP_LOGI("udp", "recvfrom success");
-        xRingbufferSend(buffer, rx, 500, 100);
+        xRingbufferSend(buffer, rx, len, 100);
       }
     }
   }
