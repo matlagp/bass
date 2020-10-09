@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Edit Node #{{ node.id }}
+{% endblock %}
+
+{% block content %}
+<h1>Edit Node #{{ node.id }}</h1>
+
+<h2>IP</h2>
+<p>{{ node.ip }}</p>
+<form action="/nodes/{{ node.id }}" method="POST">
+    <h2>Volume</h2>
+  <input id="volume" name="volume" type="text" placeholder="{{ node.volume }}"></input>
+  <br/>
+  <input type="submit"></input>
+</form>
+
+<a href="/nodes">Back</a>
+<a href="/nodes/{{ node.id }}">Show</a>
+
+{% endblock %}
