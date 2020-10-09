@@ -13,6 +13,8 @@
 #include "wm8960.h"
 #include "i2s_setup.h"
 
+#include "i2s_task.h"
+
 RingbufHandle_t buffer;
 
 static EventGroupHandle_t s_wifi_event_group;
@@ -78,26 +80,6 @@ void udpTask(void *params)
     }
   }
   vTaskDelete(NULL);
-}
-
-void i2sTask(void *params)
-{
-  size_t bytes_written;
-  uint8_t tx_blank[500];
-  memset(tx_blank, 0, 500);
-
-  for (;;)
-  {
-    uint8_t *tx = (uint8_t *)xRingbufferReceive(buffer, &bytes_written, 10);
-    if (tx == NULL)
-    {
-      i2s_write(I2S_NUM_0, tx_blank, 500, &bytes_written, portMAX_DELAY);
-      continue;
-    }
-    i2s_write(I2S_NUM_0, tx, 500, &bytes_written, portMAX_DELAY);
-
-    vRingbufferReturnItem(buffer, tx);
-  }
 }
 
 esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
@@ -211,7 +193,7 @@ void waitingTask(void *params)
         ESP_LOGE("udp", "Could not create task");
         abort();
       }
-      xTaskCreate(i2sTask, "i2s_task", 4096, NULL, 5, &xHandle);
+      xTaskCreate(i2sTask, "i2s_task", 4096, buffer, 5, &xHandle);
       if (xHandle == NULL)
       {
         ESP_LOGE("i2s", "Could not create task");
