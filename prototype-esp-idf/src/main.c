@@ -49,7 +49,7 @@ void udpTask(void *params)
     if (sock < 0)
     {
       ESP_LOGE("udp", "Unable to create socket: errno %d", errno);
-      break;
+      abort();
     }
     ESP_LOGI("udp", "Socket created");
 
@@ -57,6 +57,7 @@ void udpTask(void *params)
     if (err < 0)
     {
       ESP_LOGE("udp", "Socket unable to bind: errno %d", errno);
+      abort();
     }
     ESP_LOGI("udp", "Socket bound, port 2137");
 
@@ -68,7 +69,6 @@ void udpTask(void *params)
       if (len < 0)
       {
         ESP_LOGE("udp", "recvfrom failed: errno %d", errno);
-        break;
       }
       else
       {
