@@ -1,0 +1,12 @@
+* Problemy z I2C
+
+ 1. Wstępny proces konfiguracji przebiega ok.
+ 2. Zmiana ustawień kończy się niepowodzeniem
+ 3. Nie ma wpływu szybkość zegara
+ 4. Zmiana portów I2C (z 21, 22 na 32, 34) sprawiła, że nie działa...
+ 5. Zamiana portów i2C (21, 22) miejscami sprawiła, że też nie działa za dobrze,
+    ale nie gorzej niż odwrotnie
+
+    Być może problemem jest to, że i2s próbuje nadpisać ustawienia pinów...
+
+Problemem jest interfejs I2S...
