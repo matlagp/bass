@@ -6,13 +6,12 @@
 #include <esp_wifi.h>
 #include <soc/efuse_reg.h>
 #include "nvs_flash.h"
-#include "lwip/sockets.h"
-#include "driver/i2s.h"
 #include "mqtt_client.h"
 
 #include "wm8960.h"
 #include "i2s_setup.h"
 
+#include "udp_task.h"
 #include "i2s_task.h"
 
 RingbufHandle_t buffer;
@@ -34,52 +33,6 @@ void memTask(void *params)
     memory_report();
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
-}
-
-void udpTask(void *params)
-{
-  char rx[500];
-
-  for (;;)
-  {
-    struct sockaddr_in dest_addr;
-    dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(2137);
-
-    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-    if (sock < 0)
-    {
-      ESP_LOGE("udp", "Unable to create socket: errno %d", errno);
-      abort();
-    }
-    ESP_LOGI("udp", "Socket created");
-
-    int err = bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-    if (err < 0)
-    {
-      ESP_LOGE("udp", "Socket unable to bind: errno %d", errno);
-      abort();
-    }
-    ESP_LOGI("udp", "Socket bound, port 2137");
-
-    for (;;)
-    {
-      ESP_LOGI("udp", "Waiting for data");
-      int len = recvfrom(sock, rx, 500, 0, NULL, NULL);
-
-      if (len < 0)
-      {
-        ESP_LOGE("udp", "recvfrom failed: errno %d", errno);
-      }
-      else
-      {
-        ESP_LOGI("udp", "recvfrom success");
-        xRingbufferSend(buffer, rx, len, 100);
-      }
-    }
-  }
-  vTaskDelete(NULL);
 }
 
 esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
@@ -187,12 +140,7 @@ void waitingTask(void *params)
     {
       ESP_LOGI("wait", "WiFi Connected to ap");
       TaskHandle_t xHandle = NULL;
-      xTaskCreate(udpTask, "udp_server", 4096, NULL, 5, &xHandle);
-      if (xHandle == NULL)
-      {
-        ESP_LOGE("udp", "Could not create task");
-        abort();
-      }
+      createUdpTask(buffer);
       createI2sTask(buffer);
       xTaskCreate(mqttTask, "mqtt_task", 4096, NULL, 5, &xHandle);
       if (xHandle == NULL)
