@@ -193,12 +193,7 @@ void waitingTask(void *params)
         ESP_LOGE("udp", "Could not create task");
         abort();
       }
-      xTaskCreate(i2sTask, "i2s_task", 4096, buffer, 5, &xHandle);
-      if (xHandle == NULL)
-      {
-        ESP_LOGE("i2s", "Could not create task");
-        abort();
-      }
+      createI2sTask(buffer);
       xTaskCreate(mqttTask, "mqtt_task", 4096, NULL, 5, &xHandle);
       if (xHandle == NULL)
       {
