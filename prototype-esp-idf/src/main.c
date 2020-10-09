@@ -11,11 +11,11 @@
 #include "i2s_setup.h"
 
 #include "wifi_task.h"
-// #include "udp_task.h"
-// #include "i2s_task.h"
-// #include "mqtt_task.h"
+#include "udp_task.h"
+#include "i2s_task.h"
+#include "mqtt_task.h"
 
-// RingbufHandle_t buffer;
+RingbufHandle_t buffer;
 
 void memory_report()
 {
@@ -33,21 +33,28 @@ void memTask(void *params)
   }
 }
 
+static void on_connected()
+{
+  createUdpTask(buffer);
+  createI2sTask(buffer);
+  createMqttTask();
+}
+
 void app_main()
 {
   xTaskCreate(memTask, "memTask", 4096, NULL, 5, NULL);
-  // buffer = xRingbufferCreate(500 * 260, RINGBUF_TYPE_BYTEBUF);
-  // if (buffer == NULL)
-  // {
-  //   ESP_LOGE("buffer", "NULL");
-  //   abort();
-  // }
-  // else
-  // {
-  //   ESP_LOGI("buffer", "%u", xRingbufferGetCurFreeSize(buffer));
-  // }
+  buffer = xRingbufferCreate(500 * 260, RINGBUF_TYPE_BYTEBUF);
+  if (buffer == NULL)
+  {
+    ESP_LOGE("buffer", "NULL");
+    abort();
+  }
+  else
+  {
+    ESP_LOGI("buffer", "%u", xRingbufferGetCurFreeSize(buffer));
+  }
 
-  createWifiTask();
+  createWifiTask(on_connected);
 
   wm8960_init();
   wm8960_set_vol(255);

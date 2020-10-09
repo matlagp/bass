@@ -1,36 +1,22 @@
 #include "wifi_task.h"
 
-#include "udp_task.h"
-#include "i2s_task.h"
-#include "mqtt_task.h"
-
 static EventGroupHandle_t s_wifi_event_group;
 static const int CONNECTED_BIT = BIT0;
-
-RingbufHandle_t buffer;
 
 static void wifi_init();
 static void wifi_event_handler(void *, esp_event_base_t, int32_t, void *);
 static void waitingTask(void *);
 
-void createWifiTask()
+static void (*on_connected_handler)(void);
+
+void createWifiTask(void (*on_connected)(void))
 {
+  on_connected_handler = on_connected;
   wifi_init();
 }
 
 static void wifi_init()
 {
-  buffer = xRingbufferCreate(500 * 260, RINGBUF_TYPE_BYTEBUF);
-  if (buffer == NULL)
-  {
-    ESP_LOGE("buffer", "NULL");
-    abort();
-  }
-  else
-  {
-    ESP_LOGI("buffer", "%u", xRingbufferGetCurFreeSize(buffer));
-  }
-
   ESP_ERROR_CHECK(nvs_flash_init());
 
   ESP_ERROR_CHECK(esp_netif_init());
@@ -97,9 +83,7 @@ void waitingTask(void *params)
     if (uxBits & CONNECTED_BIT)
     {
       ESP_LOGI("wait", "WiFi Connected to ap");
-      createUdpTask(buffer);
-      createI2sTask(buffer);
-      createMqttTask();
+      on_connected_handler();
       vTaskDelete(NULL);
     }
   }
