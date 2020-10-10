@@ -4,15 +4,18 @@ static void mqttTask(void *);
 static void mqtt_event_handler(void *, esp_event_base_t, int32_t, void *);
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t);
 
+static void setNodeId();
+static void setIpAddress(char *ip_address);
+
 static uint32_t node_id;
 static char node_ip_address[INET_ADDRSTRLEN];
 
+static esp_mqtt_client_handle_t client;
+
 TaskHandle_t createMqttTask(char *ip_address)
 {
-  uint64_t chipmacid;
-  ESP_ERROR_CHECK(esp_efuse_mac_get_default((uint8_t *)(&chipmacid)));
-  node_id = (uint32_t)(chipmacid >> 16);
-  memcpy(node_ip_address, ip_address, INET_ADDRSTRLEN);
+  setNodeId();
+  setIpAddress(ip_address);
 
   xTaskHandle xHandle = NULL;
 
@@ -23,6 +26,19 @@ TaskHandle_t createMqttTask(char *ip_address)
     abort();
   }
   return xHandle;
+}
+
+void disconnectMqtt()
+{
+  ESP_LOGI(MQTT_TASK_TAG, "Disconnecting MQTT");
+  ESP_ERROR_CHECK(esp_mqtt_client_disconnect(client));
+}
+
+void reconnectMqtt(char *ip_address)
+{
+  ESP_LOGI(MQTT_TASK_TAG, "Reconnecting MQTT");
+  setIpAddress(ip_address);
+  ESP_ERROR_CHECK(esp_mqtt_client_reconnect(client));
 }
 
 static void mqttTask(void *_)
@@ -42,7 +58,7 @@ static void mqttTask(void *_)
       .lwt_qos = 1,
       .lwt_msg = "0",
       .lwt_retain = true};
-  esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
+  client = esp_mqtt_client_init(&mqtt_cfg);
   ESP_ERROR_CHECK(esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, client));
 
   ESP_ERROR_CHECK(esp_mqtt_client_start(client));
@@ -101,9 +117,24 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
   case MQTT_EVENT_ERROR:
     ESP_LOGI(MQTT_TASK_TAG, "MQTT_EVENT_ERROR");
     break;
+  case MQTT_EVENT_BEFORE_CONNECT:
+    ESP_LOGI(MQTT_TASK_TAG, "MQTT_BEFORE_CONNECT");
+    break;
   default:
     ESP_LOGI(MQTT_TASK_TAG, "Other event id:%d", event->event_id);
     break;
   }
   return ESP_OK;
+}
+
+void setNodeId()
+{
+  uint64_t chipmacid;
+  ESP_ERROR_CHECK(esp_efuse_mac_get_default((uint8_t *)(&chipmacid)));
+  node_id = (uint32_t)(chipmacid >> 16);
+}
+
+void setIpAddress(char *ip_address)
+{
+  memcpy(node_ip_address, ip_address, INET_ADDRSTRLEN);
 }

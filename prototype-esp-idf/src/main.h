@@ -16,6 +16,8 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-static void onWifiConnected();
+static void onWifiConnected(char *ip_address);
+static void onWifiDisconnected(void);
+static void onWifiReconnected(char *ip_address);
 
 #endif

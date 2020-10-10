@@ -8,7 +8,7 @@ void app_main()
 
   buffer = createRingBuffer();
 
-  createWifiTask(onWifiConnected);
+  createWifiTask(onWifiConnected, onWifiDisconnected, onWifiReconnected);
 
   wm8960_init();
   wm8960_set_vol(255);
@@ -21,4 +21,14 @@ static void onWifiConnected(char *ip_address)
   createUdpTask(buffer);
   createI2sTask(buffer);
   createMqttTask(ip_address);
+}
+
+static void onWifiDisconnected(void)
+{
+  disconnectMqtt();
+}
+
+static void onWifiReconnected(char *ip_address)
+{
+  reconnectMqtt(ip_address);
 }

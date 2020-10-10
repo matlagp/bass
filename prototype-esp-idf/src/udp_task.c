@@ -44,7 +44,7 @@ static void udpTask(RingbufHandle_t buffer)
 
     for (;;)
     {
-      ESP_LOGI(UDP_TASK_TAG, "Waiting for data");
+      ESP_LOGV(UDP_TASK_TAG, "Waiting for data");
       int len = recvfrom(sock, rx, UDP_BUFFER_SIZE, 0, NULL, NULL);
 
       if (len < 0)
@@ -53,7 +53,7 @@ static void udpTask(RingbufHandle_t buffer)
       }
       else
       {
-        ESP_LOGI(UDP_TASK_TAG, "recvfrom success");
+        ESP_LOGV(UDP_TASK_TAG, "recvfrom success");
         xRingbufferSend(buffer, rx, len, 100);
       }
     }
