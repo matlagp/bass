@@ -7,9 +7,11 @@ static void wifi_init();
 static void wifi_event_handler(void *, esp_event_base_t, int32_t, void *);
 static void waitingTask(void *);
 
-static void (*on_connected_handler)(void);
+static void (*on_connected_handler)(char *ip_address);
 
-void createWifiTask(void (*on_connected)(void))
+static char ip_address[INET_ADDRSTRLEN];
+
+void createWifiTask(void (*on_connected)(char *ip_address))
 {
   on_connected_handler = on_connected;
   wifi_init();
@@ -63,11 +65,15 @@ static void wifi_event_handler(
   }
   else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
   {
+    ESP_LOGI("wait", "WiFi disconnected");
     esp_wifi_connect();
     xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
   }
   else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
   {
+    const ip_event_got_ip_t *event = (const ip_event_got_ip_t *)event_data;
+    snprintf(ip_address, INET_ADDRSTRLEN, IPSTR, IP2STR(&event->ip_info.ip));
+    ESP_LOGI("wait", "Got IP: %s", ip_address);
     xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
   }
 }
@@ -83,7 +89,7 @@ void waitingTask(void *params)
     if (uxBits & CONNECTED_BIT)
     {
       ESP_LOGI("wait", "WiFi Connected to ap");
-      on_connected_handler();
+      on_connected_handler(ip_address);
       vTaskDelete(NULL);
     }
   }

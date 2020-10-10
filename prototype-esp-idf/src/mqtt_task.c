@@ -2,10 +2,18 @@
 
 static void mqttTask(void *);
 static void mqtt_event_handler(void *, esp_event_base_t, int32_t, void *);
-esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t);
+static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t);
 
-TaskHandle_t createMqttTask()
+static uint32_t node_id;
+static char node_ip_address[INET_ADDRSTRLEN];
+
+TaskHandle_t createMqttTask(char *ip_address)
 {
+  uint64_t chipmacid;
+  ESP_ERROR_CHECK(esp_efuse_mac_get_default((uint8_t *)(&chipmacid)));
+  node_id = (uint32_t)(chipmacid >> 16);
+  memcpy(node_ip_address, ip_address, INET_ADDRSTRLEN);
+
   xTaskHandle xHandle = NULL;
 
   xTaskCreate(mqttTask, MQTT_TASK_TAG, 4096, NULL, 5, &xHandle);
@@ -22,11 +30,8 @@ static void mqttTask(void *_)
   char name[14];
   char topic_state[30];
 
-  uint64_t chipmacid;
-  ESP_ERROR_CHECK(esp_efuse_mac_get_default((uint8_t *)(&chipmacid)));
-
-  snprintf(name, 14, "node-%08X", (uint32_t)(chipmacid >> 16));
-  snprintf(topic_state, 30, "/nodes/%08X/state", (uint32_t)(chipmacid >> 16));
+  snprintf(name, 14, "node-%08X", node_id);
+  snprintf(topic_state, 30, "/nodes/%08X/state", node_id);
 
   ESP_LOGI(MQTT_TASK_TAG, "Registering as %s", name);
 
@@ -34,7 +39,7 @@ static void mqttTask(void *_)
       .uri = "mqtt://192.168.11.113",
       .port = 1883,
       .lwt_topic = topic_state,
-      .lwt_qos = 0,
+      .lwt_qos = 1,
       .lwt_msg = "0",
       .lwt_retain = true};
   esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
@@ -52,7 +57,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
   mqtt_event_handler_cb(event_data);
 }
 
-esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
+static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 {
   esp_mqtt_client_handle_t client = event->client;
   int msg_id;
@@ -64,14 +69,11 @@ esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
     char topic_state[30];
     char topic_settings[35];
 
-    uint64_t chipmacid;
-    ESP_ERROR_CHECK(esp_efuse_mac_get_default((uint8_t *)(&chipmacid)));
-
-    snprintf(topic_state, 30, "/nodes/%08X/state", (uint32_t)(chipmacid >> 16));
-    snprintf(topic_settings, 35, "/nodes/%08X/settings/#", (uint32_t)(chipmacid >> 16));
+    snprintf(topic_state, 30, "/nodes/%08X/state", node_id);
+    snprintf(topic_settings, 35, "/nodes/%08X/settings/#", node_id);
 
     ESP_LOGI(MQTT_TASK_TAG, "MQTT_EVENT_CONNECTED");
-    msg_id = esp_mqtt_client_publish(client, topic_state, "192.168.11.117", 0, 1, 1);
+    msg_id = esp_mqtt_client_publish(client, topic_state, node_ip_address, 0, 1, 1);
     ESP_LOGI(MQTT_TASK_TAG, "sent publish successful, msg_id=%d", msg_id);
 
     msg_id = esp_mqtt_client_subscribe(client, topic_settings, 1);
@@ -84,8 +86,6 @@ esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 
   case MQTT_EVENT_SUBSCRIBED:
     ESP_LOGI(MQTT_TASK_TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-    msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "data", 0, 0, 0);
-    ESP_LOGI(MQTT_TASK_TAG, "sent publish successful, msg_id=%d", msg_id);
     break;
   case MQTT_EVENT_UNSUBSCRIBED:
     ESP_LOGI(MQTT_TASK_TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);

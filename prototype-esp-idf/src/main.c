@@ -16,9 +16,9 @@ void app_main()
   init_i2s();
 }
 
-static void onWifiConnected()
+static void onWifiConnected(char *ip_address)
 {
   createUdpTask(buffer);
   createI2sTask(buffer);
-  createMqttTask();
+  createMqttTask(ip_address);
 }
