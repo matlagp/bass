@@ -11,7 +11,7 @@
 #define I2S_TASK_TAG "i2sTask"
 
 #define I2S_PORT_NUM I2S_NUM_0
-#define I2S_BUFFER_SIZE 500
+#define I2S_BUFFER_SIZE 4096
 
 /*
 Creates a task that copies samples from a given ringbuf to the I2S driver.

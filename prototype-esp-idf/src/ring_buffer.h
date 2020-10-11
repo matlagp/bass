@@ -7,8 +7,8 @@
 
 #define RING_BUFFER_TAG "ringbuffer"
 
-#define RING_BUFFER_ITEM_SIZE 500
-#define RING_BUFFER_ITEM_COUNT 260
+#define RING_BUFFER_ITEM_SIZE 512
+#define RING_BUFFER_ITEM_COUNT 200
 
 RingbufHandle_t createRingBuffer();
 

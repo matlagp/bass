@@ -17,19 +17,19 @@ TaskHandle_t createI2sTask(RingbufHandle_t buffer)
 
 static void i2sTask(RingbufHandle_t buffer)
 {
+  size_t bytes_read;
   size_t _bytes_written;
-  uint8_t tx_blank[I2S_BUFFER_SIZE];
-  memset(tx_blank, 0, I2S_BUFFER_SIZE);
 
   for (;;)
   {
-    uint8_t *tx = (uint8_t *)xRingbufferReceive(buffer, &_bytes_written, 10);
+    uint8_t *tx = (uint8_t *)xRingbufferReceive(buffer, &bytes_read, 20);
     if (tx == NULL)
     {
-      i2s_write(I2S_PORT_NUM, tx_blank, I2S_BUFFER_SIZE, &_bytes_written, portMAX_DELAY);
+      i2s_zero_dma_buffer(I2S_PORT_NUM);
+      vTaskDelay(300 / portTICK_PERIOD_MS);
       continue;
     }
-    i2s_write(I2S_PORT_NUM, tx, I2S_BUFFER_SIZE, &_bytes_written, portMAX_DELAY);
+    i2s_write(I2S_PORT_NUM, tx, bytes_read, &_bytes_written, portMAX_DELAY);
 
     vRingbufferReturnItem(buffer, tx);
   }

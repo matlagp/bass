@@ -13,8 +13,8 @@
 #define I2S_DO_IO (GPIO_NUM_17)
 #define I2S_DI_IO (-1)
 
-#define DMA_BUFFER_COUNT (30) // 40 is definitely too much now
-#define DMA_BUFFER_LENGTH (500)
+#define DMA_BUFFER_COUNT (60)
+#define DMA_BUFFER_LENGTH (256)
 
 #define SAMPLE_PER_CYCLE (SAMPLE_RATE / WAVE_FREQ_HZ)
 

@@ -6,7 +6,7 @@ TaskHandle_t createUdpTask(RingbufHandle_t buffer)
 {
   xTaskHandle xHandle = NULL;
 
-  xTaskCreate(udpTask, UDP_TASK_TAG, 4096, buffer, 5, &xHandle);
+  xTaskCreate(udpTask, UDP_TASK_TAG, 8192, buffer, 5, &xHandle);
   if (xHandle == NULL)
   {
     ESP_LOGE(UDP_TASK_TAG, "Could not create task");
