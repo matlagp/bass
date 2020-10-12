@@ -4,6 +4,8 @@ RingbufHandle_t buffer;
 
 void app_main()
 {
+  common_init();
+
   createMemoryDebugTask();
 
   buffer = createRingBuffer();

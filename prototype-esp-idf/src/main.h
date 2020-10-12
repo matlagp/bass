@@ -7,6 +7,7 @@
 
 #include "ring_buffer.h"
 
+#include "common_init.h"
 #include "memory_debug_task.h"
 #include "wifi_task.h"
 #include "udp_task.h"
