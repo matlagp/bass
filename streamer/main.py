@@ -12,19 +12,16 @@ class Pipeline(object):
         self.pipeline = Gst.Pipeline()
 
         self.src = Gst.ElementFactory.make('alsasrc')
-        self.audioconvert = Gst.ElementFactory.make('audioconvert')
         self.tee = Gst.ElementFactory.make('tee')
         self.fakequeue = Gst.ElementFactory.make('queue')
         self.fakesink = Gst.ElementFactory.make('fakesink')
 
         self.pipeline.add(self.src)
-        self.pipeline.add(self.audioconvert)
         self.pipeline.add(self.tee)
         self.pipeline.add(self.fakequeue)
         self.pipeline.add(self.fakesink)
 
-        self.src.link(self.audioconvert)
-        self.audioconvert.link(self.tee)
+        self.src.link(self.tee)
         self.tee.get_request_pad('src_%u').link(self.fakequeue.get_static_pad('sink'))
         self.fakequeue.link(self.fakesink)
 
