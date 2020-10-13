@@ -35,18 +35,27 @@ class Pipeline(object):
 
 
 class NodeBin(object):
-    def __init__(self, pipeline):
+    def __init__(self, pipeline, host, port):
         self.pipeline = pipeline
         self.latency = Gst.ElementFactory.make('queue')
         self.equalizer = Gst.ElementFactory.make('equalizer-3bands')
-        self.sink = Gst.ElementFactory.make('autoaudiosink')
+        self.buffersize = Gst.ElementFactory.make('rndbuffersize')
+        self.sink = Gst.ElementFactory.make('udpsink')
+
+        self.buffersize.set_property('min', 512)
+        self.buffersize.set_property('max', 512)
+
+        self.sink.set_property('host', host)
+        self.sink.set_property('port', port)
 
         self.pipeline.pipeline.add(self.latency)
         self.pipeline.pipeline.add(self.equalizer)
+        self.pipeline.pipeline.add(self.buffersize)
         self.pipeline.pipeline.add(self.sink)
 
         self.latency.link(self.equalizer)
-        self.equalizer.link(self.sink)
+        self.equalizer.link(self.buffersize)
+        self.buffersize.link(self.sink)
 
         self.pipeline.pause()
 
@@ -104,17 +113,19 @@ thread = Thread(target=main_loop.run)
 thread.start()
 
 def manipulate():
-    import time
+    node_bin = NodeBin(p, '127.0.0.1', 10000)
+    # node_bin = NodeBin(p, '127.0.0.1', 10000)
 
-    while True:
-        node_bin = NodeBin(p)
-        time.sleep(1)
-        Gst.debug_bin_to_dot_file(p.pipeline, Gst.DebugGraphDetails.ALL, "pipeline_attach")
+    # import time
+    # while True:
+    #     node_bin = NodeBin(p)
+    #     time.sleep(1)
+    #     Gst.debug_bin_to_dot_file(p.pipeline, Gst.DebugGraphDetails.ALL, "pipeline_attach")
 
-        node_bin.detach()
-        node_bin = None
-        time.sleep(1)
-        Gst.debug_bin_to_dot_file(p.pipeline, Gst.DebugGraphDetails.ALL, "pipeline_detach")
+    #     node_bin.detach()
+    #     node_bin = None
+    #     time.sleep(1)
+    #     Gst.debug_bin_to_dot_file(p.pipeline, Gst.DebugGraphDetails.ALL, "pipeline_detach")
 
 thread2 = Thread(target=manipulate)
 
