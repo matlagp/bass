@@ -14,13 +14,21 @@ class Pipeline(object):
         self.src = Gst.ElementFactory.make('alsasrc')
         self.audioconvert = Gst.ElementFactory.make('audioconvert')
         self.tee = Gst.ElementFactory.make('tee')
+        self.fakequeue = Gst.ElementFactory.make('queue')
+        self.fakesink = Gst.ElementFactory.make('fakesink')
 
         self.pipeline.add(self.src)
         self.pipeline.add(self.audioconvert)
         self.pipeline.add(self.tee)
+        self.pipeline.add(self.fakequeue)
+        self.pipeline.add(self.fakesink)
 
         self.src.link(self.audioconvert)
         self.audioconvert.link(self.tee)
+        self.tee.get_request_pad('src_%u').link(self.fakequeue.get_static_pad('sink'))
+        self.fakequeue.link(self.fakesink)
+
+        self.fakesink.set_property('sync', False)
 
     def pause(self):
         return self.pipeline.set_state(Gst.State.PAUSED)
@@ -49,6 +57,7 @@ class NodeBin(object):
         self.tee.link(self.latency.get_static_pad('sink'))
 
         self.pipeline.play()
+
         print("__init__")
 
     def detach(self):
@@ -74,6 +83,13 @@ class NodeBin(object):
         self.latency.unref()
         self.equalizer.unref()
         self.sink.unref()
+
+        self.pipeline = None
+        self.latency = None
+        self.equalizer = None
+        self.sink = None
+        self.tee = None
+
         print("detach")
 
 
@@ -82,6 +98,8 @@ p = Pipeline()
 p.src.set_property('device', 'hw:1,1,0')
 
 p.play()
+
+Gst.debug_bin_to_dot_file(p.pipeline, Gst.DebugGraphDetails.ALL, "pipeline")
 
 main_loop = GLib.MainLoop()
 thread = Thread(target=main_loop.run)
@@ -94,11 +112,12 @@ def manipulate():
     while True:
         node_bin = NodeBin(p)
         time.sleep(1)
+        Gst.debug_bin_to_dot_file(p.pipeline, Gst.DebugGraphDetails.ALL, "pipeline_attach")
 
         node_bin.detach()
         node_bin = None
         time.sleep(1)
-
+        Gst.debug_bin_to_dot_file(p.pipeline, Gst.DebugGraphDetails.ALL, "pipeline_detach")
 
 thread2 = Thread(target=manipulate)
 
