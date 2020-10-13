@@ -11,51 +11,95 @@ class Pipeline(object):
     def __init__(self):
         self.pipeline = Gst.Pipeline()
 
-        self.alsasrc = Gst.ElementFactory.make('alsasrc')
+        self.src = Gst.ElementFactory.make('alsasrc')
         self.audioconvert = Gst.ElementFactory.make('audioconvert')
-        self.equalizer = Gst.ElementFactory.make('equalizer-3bands')
-        self.autoaudiosink = Gst.ElementFactory.make('autoaudiosink')
+        self.tee = Gst.ElementFactory.make('tee')
 
-        self.pipeline.add(self.alsasrc)
+        self.pipeline.add(self.src)
         self.pipeline.add(self.audioconvert)
-        self.pipeline.add(self.equalizer)
-        self.pipeline.add(self.autoaudiosink)
+        self.pipeline.add(self.tee)
 
-        self.alsasrc.link(self.audioconvert)
-        self.audioconvert.link(self.equalizer)
-        self.equalizer.link(self.autoaudiosink)
+        self.src.link(self.audioconvert)
+        self.audioconvert.link(self.tee)
+
+    def pause(self):
+        return self.pipeline.set_state(Gst.State.PAUSED)
+
+    def play(self):
+        return self.pipeline.set_state(Gst.State.PLAYING)
+
+
+class NodeBin(object):
+    def __init__(self, pipeline):
+        self.pipeline = pipeline
+        self.latency = Gst.ElementFactory.make('queue')
+        self.equalizer = Gst.ElementFactory.make('equalizer-3bands')
+        self.sink = Gst.ElementFactory.make('autoaudiosink')
+
+        self.pipeline.pipeline.add(self.latency)
+        self.pipeline.pipeline.add(self.equalizer)
+        self.pipeline.pipeline.add(self.sink)
+
+        self.latency.link(self.equalizer)
+        self.equalizer.link(self.sink)
+
+        self.pipeline.pause()
+
+        self.tee = pipeline.tee.get_request_pad('src_%u')
+        self.tee.link(self.latency.get_static_pad('sink'))
+
+        self.pipeline.play()
+        print("__init__")
+
+    def detach(self):
+        self.pipeline.pause()
+
+        self.tee.unlink(self.latency.get_static_pad('sink'))
+
+        self.pipeline.tee.release_request_pad(self.tee)
+
+        self.pipeline.play()
+
+        self.pipeline.pipeline.remove(self.latency)
+        self.pipeline.pipeline.remove(self.equalizer)
+        self.pipeline.pipeline.remove(self.sink)
+
+        self.latency.unlink(self.equalizer)
+        self.equalizer.unlink(self.sink)
+
+        self.latency.set_state(Gst.State.NULL)
+        self.equalizer.set_state(Gst.State.NULL)
+        self.sink.set_state(Gst.State.NULL)
+
+        self.latency.unref()
+        self.equalizer.unref()
+        self.sink.unref()
+        print("detach")
+
 
 p = Pipeline()
-p.alsasrc.set_property('device', 'hw:1,1,0')
-p.pipeline.set_state(Gst.State.PLAYING)
+
+p.src.set_property('device', 'hw:1,1,0')
+
+p.play()
 
 main_loop = GLib.MainLoop()
 thread = Thread(target=main_loop.run)
 
 thread.start()
 
-def equalize():
+def manipulate():
     import time
 
     while True:
-        print('bass')
-        p.equalizer.set_property('band0', 12)
-        p.equalizer.set_property('band1', 0)
-        p.equalizer.set_property('band2', 0)
+        node_bin = NodeBin(p)
         time.sleep(1)
 
-        print('mid')
-        p.equalizer.set_property('band0', 0)
-        p.equalizer.set_property('band1', 12)
-        p.equalizer.set_property('band2', 0)
+        node_bin.detach()
+        node_bin = None
         time.sleep(1)
 
-        print('trebble')
-        p.equalizer.set_property('band0', 0)
-        p.equalizer.set_property('band1', 0)
-        p.equalizer.set_property('band2', 12)
-        time.sleep(1)
 
-thread2 = Thread(target=equalize)
+thread2 = Thread(target=manipulate)
 
 thread2.start()
