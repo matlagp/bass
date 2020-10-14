@@ -30,6 +30,7 @@ class MQTTClient(threading.Thread):
             if topic[2] == 'state':
                 node = Node(node_id, message.payload.decode('ascii'))
                 __class__.node_repository.create(node)
+
             if topic[2] == 'settings' and topic[3] == 'volume':
                 volume = int(message.payload.decode('ascii'))
                 node = __class__.node_repository.find(node_id)
@@ -37,5 +38,30 @@ class MQTTClient(threading.Thread):
                     raise ValueError("Volume not between 0 and 100")
                 node.volume = volume
                 __class__.node_repository.update(node)
+
+            if topic[2] == 'settings' and topic[3] == 'bass':
+                bass = float(message.payload.decode('ascii'))
+                node = __class__.node_repository.find(node_id)
+                if bass < -24 or bass > 12:
+                    raise ValueError("Bass not between -24 and 12")
+                node.bass = bass
+                __class__.node_repository.update(node)
+
+            if topic[2] == 'settings' and topic[3] == 'mid':
+                mid = float(message.payload.decode('ascii'))
+                node = __class__.node_repository.find(node_id)
+                if mid < -24 or mid > 12:
+                    raise ValueError("Mid not between -24 and 12")
+                node.mid = mid
+                __class__.node_repository.update(node)
+
+            if topic[2] == 'settings' and topic[3] == 'trebble':
+                trebble = float(message.payload.decode('ascii'))
+                node = __class__.node_repository.find(node_id)
+                if trebble < -24 or trebble > 12:
+                    raise ValueError("Trebble not between -24 and 12")
+                node.trebble = trebble
+                __class__.node_repository.update(node)
+
         except Exception as e:
             print(f"MQTT MSG ERROR: {e}")

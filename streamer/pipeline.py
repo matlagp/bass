@@ -53,6 +53,27 @@ class Pipeline(object):
         node.set_volume(volume)
         print(self.nodes)
 
+    def set_bass(self, node_id, bass):
+        if node_id not in self.nodes:
+            self.nodes[node_id] = Node(self, node_id)
+        node = self.nodes[node_id]
+        node.set_bass(bass)
+        print(self.nodes)
+
+    def set_mid(self, node_id, mid):
+        if node_id not in self.nodes:
+            self.nodes[node_id] = Node(self, node_id)
+        node = self.nodes[node_id]
+        node.set_mid(mid)
+        print(self.nodes)
+
+    def set_trebble(self, node_id, trebble):
+        if node_id not in self.nodes:
+            self.nodes[node_id] = Node(self, node_id)
+        node = self.nodes[node_id]
+        node.set_trebble(trebble)
+        print(self.nodes)
+
 
 class Node(object):
     def __init__(self, pipeline, node_id):
@@ -72,6 +93,21 @@ class Node(object):
         self.host = host
         if self.attached:
             self.sink.set_property('host', host)
+
+    def set_bass(self, bass):
+        self.bass = bass
+        if self.attached:
+            self.equalizer.set_property('band0', self.bass)
+
+    def set_mid(self, mid):
+        self.mid = mid
+        if self.attached:
+            self.equalizer.set_property('band1', self.mid)
+
+    def set_trebble(self, bass):
+        self.trebble = bass
+        if self.attached:
+            self.equalizer.set_property('band2', self.trebble)
 
     def attach(self):
         if self.attached: return
@@ -109,6 +145,9 @@ class Node(object):
         self.attached = True
 
         self.set_volume(self.vol)
+        self.set_bass(self.bass)
+        self.set_mid(self.mid)
+        self.set_trebble(self.trebble)
 
     def detach(self):
         if not self.attached: return

@@ -33,16 +33,41 @@ def nodes_show(node_id=0):
 @app.route('/nodes/<node_id>/', methods=['POST'])
 def nodes_update(node_id=0):
     node = node_repository.find(node_id)
-    if (request.values['volume']):
-        try:
+    try:
+        if (request.values['volume']):
             volume = int(request.values['volume'])
-            if volume < 0 or volume > 100:
-                raise ValueError("Volume not between 0 and 100")
-            node.volume = volume
-            mqtt_client.client.publish("/nodes/{0:08X}/settings/volume".format(node.id), node.volume, retain=True)
-        except Exception as e:
-            print(e)
-            return render_template('nodes/edit.html', node=node)
+            if volume != node.volume:
+                if volume < 0 or volume > 100:
+                    raise ValueError("Volume not between 0 and 100")
+                node.volume = volume
+                mqtt_client.client.publish("/nodes/{0:08X}/settings/volume".format(node.id), node.volume, retain=True)
+
+        if (request.values['bass']):
+            bass = float(request.values['bass'])
+            if bass != node.bass:
+                if bass < -24 or bass > 12:
+                    raise ValueError("Bass not between -24 and 12")
+                node.bass = bass
+                mqtt_client.client.publish("/nodes/{0:08X}/settings/bass".format(node.id), node.bass, retain=True)
+
+        if (request.values['mid']):
+            mid = float(request.values['mid'])
+            if mid != node.mid:
+                if mid < -24 or mid > 12:
+                    raise ValueError("Mid not between -24 and 12")
+                node.mid = mid
+                mqtt_client.client.publish("/nodes/{0:08X}/settings/mid".format(node.id), node.mid, retain=True)
+
+        if (request.values['trebble']):
+            trebble = float(request.values['trebble'])
+            if trebble != node.trebble:
+                if trebble < -24 or trebble > 12:
+                    raise ValueError("Trebble not between -24 and 12")
+                node.trebble = trebble
+                mqtt_client.client.publish("/nodes/{0:08X}/settings/trebble".format(node.id), node.trebble, retain=True)
+    except Exception as e:
+        print(e)
+        return render_template('nodes/edit.html', node=node)
     return render_template('nodes/show.html', node=node)
 
 
