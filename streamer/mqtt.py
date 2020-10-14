@@ -25,13 +25,19 @@ class MQTTClient(Thread):
             node_id = int(topic[1], 16)
             if topic[2] == 'state':
                self._on_state(node_id, message.payload.decode('ascii'))
+            if topic[2] == 'settings' and topic[3] == 'volume':
+                self._on_volume(node_id, int(message.payload.decode('ascii')))
 
         except Exception as e:
-            print(f"MQTT MSG ERROR: {e}")
+            print(f"MQTT message handling error: {e}")
 
     def _on_state(self, node_id, message):
-        print(node_id, message)
         if message == '0':
             self.pipeline.remove_node(node_id)
         else:
             self.pipeline.add_node(node_id, message)
+
+    def _on_volume(self, node_id, volume):
+        if volume < 0 and volume > 100:
+            raise ValueError("Volume not between 0 and 100")
+        self.pipeline.set_volume(node_id, volume)
