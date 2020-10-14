@@ -39,7 +39,7 @@ def nodes_update(node_id=0):
             if volume < 0 or volume > 100:
                 raise ValueError("Volume not between 0 and 100")
             node.volume = volume
-            mqtt_client.client.publish("/nodes/{0:X}/settings/volume".format(node.id), node.volume, retain=True)
+            mqtt_client.client.publish("/nodes/{0:08X}/settings/volume".format(node.id), node.volume, retain=True)
         except Exception as e:
             print(e)
             return render_template('nodes/edit.html', node=node)
