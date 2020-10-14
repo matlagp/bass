@@ -1,14 +1,17 @@
 #include "main.h"
+#include "rtp_jitter.h"
 
-RingbufHandle_t buffer;
+RTPJitter *buf;
 
-void app_main()
+extern "C" void app_main()
 {
   common_init();
 
   createMemoryDebugTask();
 
-  buffer = createRingBuffer();
+  buf = new RTPJitter(200, 44100);
+
+  // buffer = createRingBuffer();
 
   createWifiTask(onWifiConnected, onWifiDisconnected, onWifiReconnected);
 
@@ -20,8 +23,8 @@ void app_main()
 
 static void onWifiConnected(char *ip_address)
 {
-  createUdpTask(buffer);
-  createI2sTask(buffer);
+  createUdpTask(buf);
+  // createI2sTask(buf);
   createMqttTask(ip_address);
 }
 

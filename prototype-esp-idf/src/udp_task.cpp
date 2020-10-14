@@ -1,8 +1,10 @@
 #include "udp_task.h"
+#include "rtp_jitter.h"
+#include "rtp.h"
 
-static void udpTask(RingbufHandle_t buffer);
+static void udpTask(void *buffer);
 
-TaskHandle_t createUdpTask(RingbufHandle_t buffer)
+TaskHandle_t createUdpTask(void *buffer)
 {
   xTaskHandle xHandle = NULL;
 
@@ -15,8 +17,9 @@ TaskHandle_t createUdpTask(RingbufHandle_t buffer)
   return xHandle;
 }
 
-static void udpTask(RingbufHandle_t buffer)
+static void udpTask(void *buffer)
 {
+  RTPJitter *jitter_buffer = (RTPJitter *)buffer;
   char rx[UDP_BUFFER_SIZE];
 
   for (;;)
@@ -47,15 +50,27 @@ static void udpTask(RingbufHandle_t buffer)
       ESP_LOGV(UDP_TASK_TAG, "Waiting for data");
       int len = recvfrom(sock, rx, UDP_BUFFER_SIZE, 0, NULL, NULL);
 
-      if (len < 0)
-      {
-        ESP_LOGE(UDP_TASK_TAG, "recvfrom failed: errno %d", errno);
-      }
-      else
-      {
-        ESP_LOGV(UDP_TASK_TAG, "recvfrom success");
-        xRingbufferSend(buffer, rx, len, 100);
-      }
+      rawrtp_ptr packet = std::shared_ptr<RTPPacket>(new RTPPacket((uint8_t *)rx, len));
+
+      uint32_t timestamp;
+
+      memcpy(&timestamp, &rx[4], 4);
+      printf("timestamp: %u, now: %u\r\n", htonl(timestamp), stdclock::now());
+
+      printf("type: %d, ms: %d, bytes: %d\r\n", packet->payload_type, packet->payload_ms, packet->payload_bytes);
+
+      if (packet->payload_bytes > 0)
+        jitter_buffer->push(packet);
+
+      // if (len < 0)
+      // {
+      //   ESP_LOGE(UDP_TASK_TAG, "recvfrom failed: errno %d", errno);
+      // }
+      // else
+      // {
+      //   ESP_LOGV(UDP_TASK_TAG, "recvfrom success");
+      //   xRingbufferSend(buffer, rx, len, 100);
+      // }
     }
   }
 }
