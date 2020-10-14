@@ -41,10 +41,4 @@ Do pliku trafiją dane dzwiękowe (44100Hz, 16bitów, stereo, wartości signed)
 
 Co sekundę wysyła 44100 * 16 * 2 bitów danych
 
-W jedym datagramie UDP znajduje się 500 bajtów danych
-
-W ciągu sekundy wysyłane są 352 datagramy.
-
-Kolejne datagramy są wysyłane w odstępach 2840909 nanosekund (1s / 352).
-
-Ta ostatnia część będzie wymagała zmian, bo pewnie nie będzie to brzmiało bardzo dobrze.
+W jedym datagramie UDP znajduje się 512 bajtów danych

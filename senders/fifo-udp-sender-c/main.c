@@ -9,8 +9,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#define SERVER "192.168.11.117"
-#define BUFLEN 500
+#define SERVER "192.168.11.100"
+#define BUFLEN 512
 #define PORT 2137
 
 void die(char *s)
@@ -48,7 +48,7 @@ int main(void) {
         struct timespec start, end;
         clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
-        for (int j = 0; j < 352; j++) {
+        for (int j = 0; j < 44100 * 4 / 512 + 1; j++) {
             ssize_t read_bytes = 0;
             do {
                 read_bytes += read(fifo, &message[read_bytes], BUFLEN - read_bytes);
@@ -66,7 +66,7 @@ int main(void) {
             while (1) {
                 clock_gettime(CLOCK_MONOTONIC_RAW, &end);
                 uint64_t delta_ns = (end.tv_sec - start.tv_sec) * 1000000000 + (end.tv_nsec - start.tv_nsec);
-                if (delta_ns > j * 2840909) {
+                if (delta_ns > j * (1000000000 / (44100 * 4 / 512))) {
                     break;
                 }
             }
