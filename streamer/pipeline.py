@@ -1,6 +1,6 @@
 import gi
 gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GLib
+from gi.repository import Gst
 
 BUFFER_SIZE = 512
 
@@ -33,24 +33,49 @@ class Pipeline(object):
 
     def add_node(self, node_id, host):
         if node_id not in self.nodes:
-            self.nodes[node_id] = Node(self, host, 2137)
-        else:
-            self.nodes[node_id].set_host(host)
+            self.nodes[node_id] = Node(self, node_id)
+        node = self.nodes[node_id]
+        node.set_host(host)
+        node.attach()
+        print(self.nodes)
 
     def remove_node(self, node_id):
-        if node_id in self.nodes:
-            node = self.nodes[node_id]
-            del self.nodes[node_id]
-            node.detach()
+        if node_id not in self.nodes:
+            self.nodes[node_id] = Node(self, node_id)
+        node = self.nodes[node_id]
+        node.detach()
+        print(self.nodes)
 
     def set_volume(self, node_id, volume):
-        if node_id in self.nodes:
-            self.nodes[node_id].set_volume(volume)
+        if node_id not in self.nodes:
+            self.nodes[node_id] = Node(self, node_id)
+        node = self.nodes[node_id]
+        node.set_volume(volume)
+        print(self.nodes)
 
 
 class Node(object):
-    def __init__(self, pipeline, host, port):
+    def __init__(self, pipeline, node_id):
         self.pipeline = pipeline
+        self.node_id = node_id
+        self.port = 2137
+        self.attached = False
+
+        self.vol = 100
+
+    def set_volume(self, volume):
+        self.vol = volume
+        if self.attached:
+            self.volume.set_property('volume', self.vol / 100)
+
+    def set_host(self, host):
+        self.host = host
+        if self.attached:
+            self.sink.set_property('host', host)
+
+    def attach(self):
+        if self.attached: return
+
         self.latency = Gst.ElementFactory.make('queue')
         self.equalizer = Gst.ElementFactory.make('equalizer-3bands')
         self.volume = Gst.ElementFactory.make('volume')
@@ -60,8 +85,8 @@ class Node(object):
         self.buffersize.set_property('min', BUFFER_SIZE)
         self.buffersize.set_property('max', BUFFER_SIZE)
 
-        self.sink.set_property('host', host)
-        self.sink.set_property('port', port)
+        self.sink.set_property('host', self.host)
+        self.sink.set_property('port', self.port)
 
         self.pipeline.pipeline.add(self.latency)
         self.pipeline.pipeline.add(self.equalizer)
@@ -76,12 +101,18 @@ class Node(object):
 
         self.pipeline.pause()
 
-        self.tee = pipeline.tee.get_request_pad('src_%u')
+        self.tee = self.pipeline.tee.get_request_pad('src_%u')
         self.tee.link(self.latency.get_static_pad('sink'))
 
         self.pipeline.play()
 
+        self.attached = True
+
+        self.set_volume(self.vol)
+
     def detach(self):
+        if not self.attached: return
+
         self.pipeline.pause()
 
         self.tee.unlink(self.latency.get_static_pad('sink'))
@@ -113,14 +144,9 @@ class Node(object):
         self.buffersize.unref()
         self.sink.unref()
 
-        self.pipeline = None
         self.latency = None
         self.equalizer = None
         self.sink = None
         self.tee = None
 
-    def set_volume(self, volume):
-        self.volume.set_property('volume', volume / 100)
-
-    def set_host(self, host):
-        self.sink.set_property('host', host)
+        self.attached = False
