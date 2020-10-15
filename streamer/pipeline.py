@@ -83,6 +83,9 @@ class Node(object):
         self.attached = False
 
         self.vol = 100
+        self.bass = 0
+        self.mid = 0
+        self.trebble = 0
 
     def set_volume(self, volume):
         self.vol = volume
