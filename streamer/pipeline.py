@@ -77,6 +77,7 @@ class Node(object):
         self.port = 2137
         self.attached = False
 
+        self.host = 'unset'
         self.vol = 100
         self.bass = 0.0
         self.mid = 0.0
