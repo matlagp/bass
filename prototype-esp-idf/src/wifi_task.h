@@ -9,6 +9,8 @@
 
 #define WIFI_TASK_TAG "wifiTask"
 
+#define min(a, b) ((a) <= (b) ? (a) : (b))
+
 /*
 Initializes WiFi and creates a task that handles the connection.
 

@@ -18,6 +18,7 @@
 #define MAIN_H
 
 static void onWifiCredentialsReceived(char *ssid, char *password, char *server_ip);
+static void onWifiNotConnected(void);
 static void onWifiConnected(char *ip_address);
 static void onWifiDisconnected(void);
 static void onWifiReconnected(char *ip_address);
