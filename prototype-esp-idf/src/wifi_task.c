@@ -1,8 +1,9 @@
 #include "wifi_task.h"
 
-static void wifi_init();
+static void wifi_init(char *ssid, char *password);
 static void wifi_event_handler(void *, esp_event_base_t, int32_t, void *);
 
+static void (*on_not_connected_handler)(void);
 static void (*on_connected_handler)(char *ip_address);
 static void (*on_disconnected_handler)(void);
 static void (*on_reconnected_handler)(char *ip_address);
@@ -11,18 +12,22 @@ static bool first_connection = true;
 static char ip_address[INET_ADDRSTRLEN];
 
 void createWifiTask(
+    char *ssid,
+    char *password,
+    void (*on_not_connected)(void),
     void (*on_connected)(char *ip_address),
     void (*on_disconnected)(void),
     void (*on_reconnected)(char *ip_address))
 {
+  on_not_connected_handler = on_not_connected;
   on_connected_handler = on_connected;
   on_disconnected_handler = on_disconnected;
   on_reconnected_handler = on_reconnected;
 
-  wifi_init();
+  wifi_init(ssid, password);
 }
 
-static void wifi_init()
+static void wifi_init(char *ssid, char *password)
 {
   ESP_ERROR_CHECK(esp_netif_init());
 
@@ -36,8 +41,8 @@ static void wifi_init()
 
   wifi_config_t sta_config = {
       .sta = {
-          .ssid = "...",
-          .password = "..."},
+          .ssid = ssid,
+          .password = password},
   };
   ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &sta_config));
 
@@ -57,8 +62,11 @@ static void wifi_event_handler(
   if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
   {
     ESP_LOGI("wait", "WiFi disconnected");
-    if (!first_connection)
+    if (first_connection)
+      on_not_connected_handler();
+    else
       on_disconnected_handler();
+
     esp_wifi_connect();
   }
   else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
