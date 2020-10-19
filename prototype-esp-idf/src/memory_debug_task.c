@@ -3,6 +3,10 @@
 
 static void memoryDebugTask(void *);
 
+static uint32_t heap = 0;
+static uint32_t mheap = 0;
+static size_t bheap = 0;
+
 xTaskHandle createMemoryDebugTask()
 {
   if (CONFIG_LOG_DEFAULT_LEVEL >= 3)
@@ -28,9 +32,19 @@ static void memoryDebugTask(void *_)
 {
   for (;;)
   {
-    ESP_LOGI(MEMORY_DEBUG_TASK_TAG, "heap: %d", xPortGetFreeHeapSize());
-    ESP_LOGI(MEMORY_DEBUG_TASK_TAG, "mheap: %d", xPortGetMinimumEverFreeHeapSize());
-    ESP_LOGI(MEMORY_DEBUG_TASK_TAG, "bheap: %u", heap_caps_get_largest_free_block(MALLOC_CAP_32BIT));
+    uint32_t new_heap = xPortGetFreeHeapSize();
+    uint32_t new_mheap = xPortGetMinimumEverFreeHeapSize();
+    size_t new_bheap = heap_caps_get_largest_free_block(MALLOC_CAP_32BIT);
+    if (new_heap != heap || new_mheap != mheap || new_bheap != bheap)
+    {
+      ESP_LOGI(MEMORY_DEBUG_TASK_TAG, "heap: %u -> %u", heap, new_heap);
+      ESP_LOGI(MEMORY_DEBUG_TASK_TAG, "mheap: %u -> %u", mheap, new_mheap);
+      ESP_LOGI(MEMORY_DEBUG_TASK_TAG, "bheap: %u -> %u", bheap, new_bheap);
+
+      heap = new_heap;
+      mheap = new_mheap;
+      bheap = new_bheap;
+    }
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
