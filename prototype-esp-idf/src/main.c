@@ -4,6 +4,8 @@
 
 RingbufHandle_t buffer;
 
+static char *received_server_ip;
+
 void app_main()
 {
   common_init();
@@ -18,6 +20,8 @@ void app_main()
 static void onWifiCredentialsReceived(char *ssid, char *password, char *server_ip)
 {
   printf("Received Wifi Credentials\r\n");
+
+  received_server_ip = server_ip;
 
   createWifiTask(ssid, password, onWifiNotConnected, onWifiConnected, onWifiDisconnected, onWifiReconnected);
 }
@@ -40,7 +44,7 @@ static void onWifiConnected(char *ip_address)
 
   createUdpTask(buffer);
   createI2sTask(buffer);
-  createMqttTask(ip_address);
+  createMqttTask(ip_address, received_server_ip);
 }
 
 static void onWifiDisconnected(void)
