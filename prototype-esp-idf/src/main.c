@@ -19,8 +19,6 @@ void app_main()
 
 static void onWifiCredentialsReceived(char *ssid, char *password, char *server_ip)
 {
-  printf("Received Wifi Credentials\r\n");
-
   received_server_ip = server_ip;
 
   createWifiTask(ssid, password, onWifiNotConnected, onWifiConnected, onWifiDisconnected, onWifiReconnected);
@@ -28,7 +26,6 @@ static void onWifiCredentialsReceived(char *ssid, char *password, char *server_i
 
 static void onWifiNotConnected(void)
 {
-  printf("Wifi Credentials Invalid\r\n");
   retryBluetooth();
 }
 
