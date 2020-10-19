@@ -1,13 +1,10 @@
 #include "bluetooth_task.h"
 
-#define SPP_SHOW_DATA 0
-#define SPP_SHOW_SPEED 1
-#define SPP_SHOW_MODE SPP_SHOW_DATA /*Choose show mode: show data or speed*/
-
 static const esp_spp_mode_t esp_spp_mode = ESP_SPP_MODE_CB;
 
 static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
 static void parse_credentials(esp_spp_cb_param_t *param);
+static void free_buffers(void);
 
 static bool received_credentials = false;
 static char *wifi_ssid = NULL;
@@ -41,16 +38,7 @@ void createBluetoothTask(void (*on_credentials_received)(char *ssid, char *passw
 
 void cleanupBluetooth()
 {
-  if (wifi_ssid != NULL)
-  {
-    free(wifi_ssid);
-    wifi_ssid = NULL;
-  }
-  if (wifi_password != NULL)
-  {
-    free(wifi_password);
-    wifi_password = NULL;
-  }
+  free_buffers();
 
   ESP_ERROR_CHECK(esp_bluedroid_disable());
   ESP_ERROR_CHECK(esp_bluedroid_deinit());
@@ -62,16 +50,7 @@ void cleanupBluetooth()
 void retryBluetooth(void)
 {
   received_credentials = false;
-  if (wifi_ssid != NULL)
-  {
-    free(wifi_ssid);
-    wifi_ssid = NULL;
-  }
-  if (wifi_password != NULL)
-  {
-    free(wifi_password);
-    wifi_password = NULL;
-  }
+  free_buffers();
 
   ESP_ERROR_CHECK(esp_spp_register_callback(esp_spp_cb));
   ESP_ERROR_CHECK(esp_spp_init(esp_spp_mode));
@@ -126,17 +105,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 static void parse_credentials(esp_spp_cb_param_t *param)
 {
   received_credentials = false;
-
-  if (wifi_ssid != NULL)
-  {
-    free(wifi_ssid);
-    wifi_ssid = NULL;
-  }
-  if (wifi_password != NULL)
-  {
-    free(wifi_password);
-    wifi_password = NULL;
-  }
+  free_buffers();
 
   enum parse_state_t
   {
@@ -255,5 +224,19 @@ static void parse_credentials(esp_spp_cb_param_t *param)
   else
   {
     ESP_LOGW(BLUETOOTH_TASK_TAG, "Finished in an unexpected state: %d", state);
+  }
+}
+
+static void free_buffers(void)
+{
+  if (wifi_ssid != NULL)
+  {
+    free(wifi_ssid);
+    wifi_ssid = NULL;
+  }
+  if (wifi_password != NULL)
+  {
+    free(wifi_password);
+    wifi_password = NULL;
   }
 }
