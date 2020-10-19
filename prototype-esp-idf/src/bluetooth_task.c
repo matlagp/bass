@@ -80,3 +80,12 @@ void createBluetoothTask(void (*on_credentials_received)(void))
   esp_bt_pin_code_t pin_code;
   esp_bt_gap_set_pin(pin_type, 0, pin_code);
 }
+
+void cleanupBluetooth()
+{
+  ESP_ERROR_CHECK(esp_bluedroid_disable());
+  ESP_ERROR_CHECK(esp_bluedroid_deinit());
+  ESP_ERROR_CHECK(esp_bt_controller_disable());
+  ESP_ERROR_CHECK(esp_bt_controller_deinit());
+  ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
+}

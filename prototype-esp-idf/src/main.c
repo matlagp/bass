@@ -13,22 +13,25 @@ void app_main()
   buffer = createRingBuffer();
 
   createBluetoothTask(onWifiCredentialsReceived);
-
-  // createWifiTask(onWifiConnected, onWifiDisconnected, onWifiReconnected);
-
-  wm8960_init();
-  wm8960_set_vol(255);
-
-  init_i2s();
 }
 
 static void onWifiCredentialsReceived(void)
 {
   printf("Received Wifi Credentials\r\n");
+
+  createWifiTask(onWifiConnected, onWifiDisconnected, onWifiReconnected);
 }
 
 static void onWifiConnected(char *ip_address)
 {
+  cleanupBluetooth();
+
+  vTaskDelay(100 / portTICK_PERIOD_MS); // Wait for bluetooth cleanup
+
+  wm8960_init();
+  wm8960_set_vol(255);
+  init_i2s();
+
   createUdpTask(buffer);
   createI2sTask(buffer);
   createMqttTask(ip_address);
