@@ -15,6 +15,6 @@
 
 #define BLUETOOTH_TASK_TAG "btTask"
 
-void createBluetoothTask();
+void createBluetoothTask(void (*on_credentials_received)(void));
 
 #endif

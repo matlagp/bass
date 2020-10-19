@@ -10,9 +10,9 @@ void app_main()
 
   createMemoryDebugTask();
 
-  createBluetoothTask();
-
   buffer = createRingBuffer();
+
+  createBluetoothTask(onWifiCredentialsReceived);
 
   // createWifiTask(onWifiConnected, onWifiDisconnected, onWifiReconnected);
 
@@ -20,6 +20,11 @@ void app_main()
   wm8960_set_vol(255);
 
   init_i2s();
+}
+
+static void onWifiCredentialsReceived(void)
+{
+  printf("Received Wifi Credentials\r\n");
 }
 
 static void onWifiConnected(char *ip_address)
