@@ -2,7 +2,9 @@
 #include <freertos/task.h>
 #include <freertos/ringbuf.h>
 
-#include "wm8960.h"
+#ifdef USE_WM8960
+  #include "wm8960.h"
+#endif
 #include "i2s_setup.h"
 
 #include "ring_buffer.h"

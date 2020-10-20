@@ -33,8 +33,10 @@ static void onWifiConnected(char *ip_address)
 
   vTaskDelay(100 / portTICK_PERIOD_MS); // Wait for bluetooth cleanup
 
-  wm8960_init();
-  wm8960_set_vol(255);
+  #ifdef USE_WM8960
+    wm8960_init();
+    wm8960_set_vol(255);
+  #endif
   init_i2s();
 
   createUdpTask(buffer);
