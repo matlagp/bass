@@ -14,9 +14,9 @@ void init_i2s()
       .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1 //Interrupt level 1
   };
   i2s_pin_config_t pin_config = {
-      .bck_io_num = 26,
-      .ws_io_num = 25,
-      .data_out_num = 22,
+      .bck_io_num = I2S_BCK_IO,
+      .ws_io_num = I2S_WS_IO,
+      .data_out_num = I2S_DO_IO,
       .data_in_num = I2S_PIN_NO_CHANGE //Not used
   };
 
