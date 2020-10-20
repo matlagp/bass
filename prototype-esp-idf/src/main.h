@@ -6,6 +6,7 @@
   #include "wm8960.h"
 #endif
 #include "i2s_setup.h"
+#include "ir_setup.h"
 
 #include "ring_buffer.h"
 

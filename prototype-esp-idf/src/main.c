@@ -38,6 +38,7 @@ static void onWifiConnected(char *ip_address)
     wm8960_set_vol(255);
   #endif
   init_i2s();
+  init_ir();
 
   createUdpTask(buffer);
   createI2sTask(buffer);
