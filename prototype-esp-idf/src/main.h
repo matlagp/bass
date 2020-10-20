@@ -13,6 +13,7 @@
 #include "udp_task.h"
 #include "i2s_task.h"
 #include "mqtt_task.h"
+#include "bluetooth_task.h"
 
 #ifndef MAIN_H
 #define MAIN_H

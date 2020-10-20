@@ -1,7 +1,5 @@
 #include "main.h"
 
-#include "bluetooth_task.h"
-
 RingbufHandle_t buffer;
 
 static char *received_server_ip;
