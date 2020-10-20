@@ -2,7 +2,9 @@
 
 ## Important
 
-To flash the image, partition size has to be increased.
+To flash the image, partition size has to be increased. It should be taken care of automagically,
+thanks to setting partitions file in platformio.ini, however if you get error messages about
+insufficient space, do the following:
 
 Edit file: `~/.platformio/packages/framework-espidf/components/partition_table/partitions_singleapp.csv`
 
