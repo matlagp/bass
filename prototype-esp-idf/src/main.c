@@ -33,6 +33,10 @@ static void onWifiConnected(char *ip_address)
 
   vTaskDelay(100 / portTICK_PERIOD_MS); // Wait for bluetooth cleanup
 
+  setNodeId();
+  setNodeIpAddress(ip_address);
+  setMqttServerUri(received_server_ip);
+
   #ifdef USE_WM8960
     wm8960_init();
     wm8960_set_vol(255);
@@ -53,5 +57,6 @@ static void onWifiDisconnected(void)
 
 static void onWifiReconnected(char *ip_address)
 {
-  reconnectMqtt(ip_address);
+  setNodeIpAddress(ip_address);
+  reconnectMqtt();
 }

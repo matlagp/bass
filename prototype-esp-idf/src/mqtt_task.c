@@ -4,22 +4,10 @@ static void mqttTask(void *);
 static void mqtt_event_handler(void *, esp_event_base_t, int32_t, void *);
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t);
 
-static void setNodeId();
-static void setIpAddress(char *ip_address);
-static void setServerIpAddress(char *server_ip_address);
-
-static uint32_t node_id;
-static char node_ip_address[INET_ADDRSTRLEN];
-static char server_uri[7 + INET_ADDRSTRLEN];
-
 static esp_mqtt_client_handle_t client;
 
-TaskHandle_t createMqttTask(char *ip_address, char *server_ip_address)
+TaskHandle_t createMqttTask()
 {
-  setNodeId();
-  setIpAddress(ip_address);
-  setServerIpAddress(server_ip_address);
-
   xTaskHandle xHandle = NULL;
 
   xTaskCreate(mqttTask, MQTT_TASK_TAG, 4096, NULL, 5, &xHandle);
@@ -37,10 +25,9 @@ void disconnectMqtt()
   ESP_ERROR_CHECK(esp_mqtt_client_disconnect(client));
 }
 
-void reconnectMqtt(char *ip_address)
+void reconnectMqtt()
 {
   ESP_LOGI(MQTT_TASK_TAG, "Reconnecting MQTT");
-  setIpAddress(ip_address);
   ESP_ERROR_CHECK(esp_mqtt_client_reconnect(client));
 }
 
@@ -55,7 +42,7 @@ static void mqttTask(void *_)
   ESP_LOGI(MQTT_TASK_TAG, "Registering as %s", name);
 
   const esp_mqtt_client_config_t mqtt_cfg = {
-      .uri = server_uri,
+      .uri = mqtt_server_uri,
       .port = 1883,
       .lwt_topic = topic_state,
       .lwt_qos = 1,
@@ -128,21 +115,4 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
     break;
   }
   return ESP_OK;
-}
-
-void setNodeId()
-{
-  uint64_t chipmacid;
-  ESP_ERROR_CHECK(esp_efuse_mac_get_default((uint8_t *)(&chipmacid)));
-  node_id = (uint32_t)(chipmacid >> 16);
-}
-
-void setIpAddress(char *ip_address)
-{
-  memcpy(node_ip_address, ip_address, INET_ADDRSTRLEN);
-}
-
-void setServerIpAddress(char *server_ip_address)
-{
-  snprintf(server_uri, 7 + INET_ADDRSTRLEN, "mqtt://%s", server_ip_address);
 }
