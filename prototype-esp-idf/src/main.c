@@ -1,6 +1,10 @@
 #include "main.h"
 
+#include "bluetooth_task.h"
+
 RingbufHandle_t buffer;
+
+static char *received_server_ip;
 
 void app_main()
 {
@@ -10,19 +14,34 @@ void app_main()
 
   buffer = createRingBuffer();
 
-  createWifiTask(onWifiConnected, onWifiDisconnected, onWifiReconnected);
+  createBluetoothTask(onWifiCredentialsReceived);
+}
 
-  wm8960_init();
-  wm8960_set_vol(255);
+static void onWifiCredentialsReceived(char *ssid, char *password, char *server_ip)
+{
+  received_server_ip = server_ip;
 
-  init_i2s();
+  createWifiTask(ssid, password, onWifiNotConnected, onWifiConnected, onWifiDisconnected, onWifiReconnected);
+}
+
+static void onWifiNotConnected(void)
+{
+  retryBluetooth();
 }
 
 static void onWifiConnected(char *ip_address)
 {
+  cleanupBluetooth();
+
+  vTaskDelay(100 / portTICK_PERIOD_MS); // Wait for bluetooth cleanup
+
+  wm8960_init();
+  wm8960_set_vol(255);
+  init_i2s();
+
   createUdpTask(buffer);
   createI2sTask(buffer);
-  createMqttTask(ip_address);
+  createMqttTask(ip_address, received_server_ip);
 }
 
 static void onWifiDisconnected(void)

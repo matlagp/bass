@@ -6,16 +6,19 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t);
 
 static void setNodeId();
 static void setIpAddress(char *ip_address);
+static void setServerIpAddress(char *server_ip_address);
 
 static uint32_t node_id;
 static char node_ip_address[INET_ADDRSTRLEN];
+static char server_uri[7 + INET_ADDRSTRLEN];
 
 static esp_mqtt_client_handle_t client;
 
-TaskHandle_t createMqttTask(char *ip_address)
+TaskHandle_t createMqttTask(char *ip_address, char *server_ip_address)
 {
   setNodeId();
   setIpAddress(ip_address);
+  setServerIpAddress(server_ip_address);
 
   xTaskHandle xHandle = NULL;
 
@@ -52,7 +55,7 @@ static void mqttTask(void *_)
   ESP_LOGI(MQTT_TASK_TAG, "Registering as %s", name);
 
   const esp_mqtt_client_config_t mqtt_cfg = {
-      .uri = "mqtt://192.168.11.113",
+      .uri = server_uri,
       .port = 1883,
       .lwt_topic = topic_state,
       .lwt_qos = 1,
@@ -137,4 +140,9 @@ void setNodeId()
 void setIpAddress(char *ip_address)
 {
   memcpy(node_ip_address, ip_address, INET_ADDRSTRLEN);
+}
+
+void setServerIpAddress(char *server_ip_address)
+{
+  snprintf(server_uri, 7 + INET_ADDRSTRLEN, "mqtt://%s", server_ip_address);
 }
