@@ -10,10 +10,28 @@ Edit Node #{{ node.id }}
 <h2>IP</h2>
 <p>{{ node.ip }}</p>
 <form action="/nodes/{{ node.id }}" method="POST">
-    <h2>Volume</h2>
-  <input id="volume" name="volume" type="text" placeholder="{{ node.volume }}"></input>
+  <h2>Volume</h2>
+  {% if errors["volume"] is not none %}
+    <p>{{ errors["volume"] }}</p>
+  {% endif %}
+  <input id="volume" name="volume" type="text" placeholder="{{ node.volume }}">
+  <h2>Bass</h2>
+  {% if errors["bass"] is not none %}
+    <p>{{ errors["bass"] }}</p>
+  {% endif %}
+  <input id="bass" name="bass" type="range" min="-12" max="12" step="0.1" value="{{ node.bass }}">
+  <h2>Mid</h2>
+  {% if errors["mid"] is not none %}
+    <p>{{ errors["mid"] }}</p>
+  {% endif %}
+  <input id="mid" name="mid" type="range" min="-12" max="12" step="0.1" value="{{ node.mid }}">
+  <h2>Trebble</h2>
+  {% if errors["trebble"] is not none %}
+    <p>{{ errors["trebble"] }}</p>
+  {% endif %}
+  <input id="trebble" name="trebble" type="range" min="-12" max="12" step="0.1" value="{{ node.trebble }}">
   <br/>
-  <input type="submit"></input>
+  <button type="submit">Save</button>
 </form>
 
 <a href="/nodes">Back</a>
