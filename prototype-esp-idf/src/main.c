@@ -43,6 +43,7 @@ static void onWifiConnected(char *ip_address)
   createUdpTask(buffer);
   createI2sTask(buffer);
   createMqttTask(ip_address, received_server_ip);
+  createIrTask();
 }
 
 static void onWifiDisconnected(void)
