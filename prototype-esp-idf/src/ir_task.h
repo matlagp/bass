@@ -3,7 +3,10 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/ringbuf.h>
 #include <freertos/task.h>
+#include "mqtt_client.h"
+#include "mqtt_task.h"
 #include "ir/tools.h"
+#include "node_attributes.h"
 
 #ifndef IR_TASK_H
 #define IR_TASK_H

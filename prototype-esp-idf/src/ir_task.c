@@ -1,11 +1,14 @@
 #include "ir_task.h"
 
 static void irTask(void *);
+static void processIrCmd(uint32_t, bool);
+
+static TickType_t lastCmdTickCount = 0;
 
 TaskHandle_t createIrTask() {
   xTaskHandle xHandle = NULL;
 
-  xTaskCreate(irTask, IR_TASK_TAG, 2048, NULL, 5, &xHandle);
+  xTaskCreate(irTask, IR_TASK_TAG, 4096, NULL, 5, &xHandle);
   if (xHandle == NULL) {
     ESP_LOGE(IR_TASK_TAG, "Could not create task");
     abort();
@@ -36,10 +39,59 @@ static void irTask(void *_) {
           ir_parser->get_scan_code(ir_parser, &addr, &cmd, &repeat) == ESP_OK) {
         ESP_LOGI(IR_TASK_TAG, "Scan Code %s --- addr: 0x%04x cmd: 0x%04x",
                  repeat ? "(repeat)" : "", addr, cmd);
+        processIrCmd(cmd, repeat);
       } else {
-        ESP_LOGE(IR_TASK_TAG, "Problem while decoding IR data");
+        ESP_LOGD(IR_TASK_TAG, "Got IR packet that couldn't be decoded");
       }
       vRingbufferReturnItem(buffer, (void *)ir_data);
     }
+  }
+}
+
+static void processIrCmd(uint32_t cmd, bool repeat) {
+  TickType_t tickCount = xTaskGetTickCount();
+  if (repeat && (tickCount - lastCmdTickCount < pdMS_TO_TICKS(200))) {
+    return;
+  }
+  lastCmdTickCount = tickCount;
+
+  char topic_volume[32];
+  char topic_bass[30];
+  char topic_mid[29];
+  char topic_trebble[33];
+
+  snprintf(topic_volume, 32, "/nodes/%08X/settings/volume", node_id);
+  snprintf(topic_bass, 30, "/nodes/%08X/settings/bass", node_id);
+  snprintf(topic_mid, 29, "/nodes/%08X/settings/mid", node_id);
+  snprintf(topic_trebble, 33, "/nodes/%08X/settings/trebble", node_id);
+
+  switch (cmd) {
+    case 0xf807:  // Volume down
+      esp_mqtt_client_publish(mqtt_client, topic_volume, "-5", 2, 1, 1);
+      break;
+    case 0xea15:  // Volume up
+      esp_mqtt_client_publish(mqtt_client, topic_volume, "5", 1, 1, 1);
+      break;
+    case 0xf30c:  // Bass down
+      esp_mqtt_client_publish(mqtt_client, topic_bass, "-0.5", 4, 1, 1);
+      break;
+    case 0xe718:  // Bass up
+      esp_mqtt_client_publish(mqtt_client, topic_bass, "0.5", 3, 1, 1);
+      break;
+    case 0xf708:  // Mid down
+      esp_mqtt_client_publish(mqtt_client, topic_mid, "-0.5", 4, 1, 1);
+      break;
+    case 0xe31c:  // Mid up
+      esp_mqtt_client_publish(mqtt_client, topic_mid, "0.5", 3, 1, 1);
+      break;
+    case 0xbd42:  // Trebble down
+      esp_mqtt_client_publish(mqtt_client, topic_trebble, "-0.5", 4, 1, 1);
+      break;
+    case 0xad52:  // Trebble up
+      esp_mqtt_client_publish(mqtt_client, topic_trebble, "0.5", 3, 1, 1);
+      break;
+    default:
+      ESP_LOGI(IR_TASK_TAG, "Unsupported command: %04x", cmd);
+      break;
   }
 }

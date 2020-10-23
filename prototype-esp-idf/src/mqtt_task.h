@@ -11,6 +11,11 @@
 #define MQTT_TASK_TAG "mqttTask"
 
 /*
+MQTT client handle
+*/
+esp_mqtt_client_handle_t mqtt_client;
+
+/*
 Initializes the MQTT client and creates a task that handles the connection.
 WiFi disconnects and reconnects have to be handled manually.
 */

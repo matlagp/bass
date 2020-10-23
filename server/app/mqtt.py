@@ -37,24 +37,28 @@ class MQTTClient(threading.Thread):
                 node = __class__.node_repository.find(node_id)
 
                 if topic[3] == 'volume':
-                    volume = int(msg)
-                    __class__._check_range(volume, 0, 100, "Volume")
-                    node.volume = volume
+                    volume_diff = int(msg)
+                    new_volume = node.volume + volume_diff
+                    __class__._check_range(new_volume, 0, 100, "Volume")
+                    node.volume = new_volume
 
                 elif topic[3] == 'bass':
-                    bass = float(msg)
-                    __class__._check_range(bass, -24, 12, "Bass")
-                    node.bass = bass
+                    bass_diff = float(msg)
+                    new_bass = node.bass + bass_diff
+                    __class__._check_range(new_bass, -24, 12, "Bass")
+                    node.bass = new_bass
 
                 elif topic[3] == 'mid':
-                    mid = float(msg)
-                    __class__._check_range(mid, -24, 12, "Mid")
-                    node.mid = mid
+                    mid_diff = float(msg)
+                    new_mid = node.mid + mid_diff
+                    __class__._check_range(new_mid, -24, 12, "Mid")
+                    node.mid = new_mid
 
                 elif topic[3] == 'trebble':
-                    trebble = float(msg)
-                    __class__._check_range(trebble, -24, 12, "Trebble")
-                    node.trebble = trebble
+                    trebble_diff = float(msg)
+                    new_trebble = node.trebble + trebble_diff
+                    __class__._check_range(new_trebble, -24, 12, "Trebble")
+                    node.trebble = new_trebble
 
                 __class__.node_repository.update(node)
 

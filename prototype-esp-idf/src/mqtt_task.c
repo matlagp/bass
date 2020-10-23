@@ -4,8 +4,6 @@ static void mqttTask(void *);
 static void mqtt_event_handler(void *, esp_event_base_t, int32_t, void *);
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t);
 
-static esp_mqtt_client_handle_t client;
-
 TaskHandle_t createMqttTask()
 {
   xTaskHandle xHandle = NULL;
@@ -22,13 +20,13 @@ TaskHandle_t createMqttTask()
 void disconnectMqtt()
 {
   ESP_LOGI(MQTT_TASK_TAG, "Disconnecting MQTT");
-  ESP_ERROR_CHECK(esp_mqtt_client_disconnect(client));
+  ESP_ERROR_CHECK(esp_mqtt_client_disconnect(mqtt_client));
 }
 
 void reconnectMqtt()
 {
   ESP_LOGI(MQTT_TASK_TAG, "Reconnecting MQTT");
-  ESP_ERROR_CHECK(esp_mqtt_client_reconnect(client));
+  ESP_ERROR_CHECK(esp_mqtt_client_reconnect(mqtt_client));
 }
 
 static void mqttTask(void *_)
@@ -48,10 +46,10 @@ static void mqttTask(void *_)
       .lwt_qos = 1,
       .lwt_msg = "0",
       .lwt_retain = true};
-  client = esp_mqtt_client_init(&mqtt_cfg);
-  ESP_ERROR_CHECK(esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, client));
+  mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
+  ESP_ERROR_CHECK(esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, mqtt_event_handler, mqtt_client));
 
-  ESP_ERROR_CHECK(esp_mqtt_client_start(client));
+  ESP_ERROR_CHECK(esp_mqtt_client_start(mqtt_client));
 
   ESP_LOGI(MQTT_TASK_TAG, "Mqtt connection started");
   vTaskDelete(NULL);
