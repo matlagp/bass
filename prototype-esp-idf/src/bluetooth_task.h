@@ -31,6 +31,6 @@ Call after checking that the retrieved credentials are valid.
 
 The bluetooth SPP server cannot be started again after calling this.
 */
-void cleanupBluetooth(void);
+void cleanupBluetooth(bool);
 
 #endif

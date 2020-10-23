@@ -36,14 +36,16 @@ void createBluetoothTask(void (*on_credentials_received)(char *ssid, char *passw
   esp_bt_gap_set_pin(pin_type, 0, pin_code);
 }
 
-void cleanupBluetooth()
+void cleanupBluetooth(bool bluetoothInitialized)
 {
   free_buffers();
 
-  ESP_ERROR_CHECK(esp_bluedroid_disable());
-  ESP_ERROR_CHECK(esp_bluedroid_deinit());
-  ESP_ERROR_CHECK(esp_bt_controller_disable());
-  ESP_ERROR_CHECK(esp_bt_controller_deinit());
+  if (bluetoothInitialized) {
+    ESP_ERROR_CHECK(esp_bluedroid_disable());
+    ESP_ERROR_CHECK(esp_bluedroid_deinit());
+    ESP_ERROR_CHECK(esp_bt_controller_disable());
+    ESP_ERROR_CHECK(esp_bt_controller_deinit());
+  }
   ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 }
 
