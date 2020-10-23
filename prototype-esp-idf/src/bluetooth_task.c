@@ -2,10 +2,12 @@
 
 static const esp_spp_mode_t esp_spp_mode = ESP_SPP_MODE_CB;
 
+static void initializeBluetooth();
 static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
 static void parse_credentials(esp_spp_cb_param_t *param);
 static void free_buffers(void);
 
+static bool bluetoothInitialized = false;
 static bool received_credentials = false;
 static char *wifi_ssid = NULL;
 static char *wifi_password = NULL;
@@ -19,11 +21,7 @@ void createBluetoothTask(void (*on_credentials_received)(char *ssid, char *passw
 
   ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
 
-  esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-  ESP_ERROR_CHECK(esp_bt_controller_init(&bt_cfg));
-  ESP_ERROR_CHECK(esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT));
-  ESP_ERROR_CHECK(esp_bluedroid_init());
-  ESP_ERROR_CHECK(esp_bluedroid_enable());
+  initializeBluetooth();
   ESP_ERROR_CHECK(esp_spp_register_callback(esp_spp_cb));
   ESP_ERROR_CHECK(esp_spp_init(esp_spp_mode));
 
@@ -36,7 +34,16 @@ void createBluetoothTask(void (*on_credentials_received)(char *ssid, char *passw
   esp_bt_gap_set_pin(pin_type, 0, pin_code);
 }
 
-void cleanupBluetooth(bool bluetoothInitialized)
+void initializeBluetooth() {
+  bluetoothInitialized = true;
+  esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+  ESP_ERROR_CHECK(esp_bt_controller_init(&bt_cfg));
+  ESP_ERROR_CHECK(esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT));
+  ESP_ERROR_CHECK(esp_bluedroid_init());
+  ESP_ERROR_CHECK(esp_bluedroid_enable());
+}
+
+void cleanupBluetooth()
 {
   free_buffers();
 
@@ -54,6 +61,9 @@ void retryBluetooth(void)
   received_credentials = false;
   free_buffers();
 
+  if (!bluetoothInitialized) {
+    initializeBluetooth();
+  }
   ESP_ERROR_CHECK(esp_spp_register_callback(esp_spp_cb));
   ESP_ERROR_CHECK(esp_spp_init(esp_spp_mode));
 }

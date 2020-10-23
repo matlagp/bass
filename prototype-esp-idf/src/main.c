@@ -45,7 +45,7 @@ void app_main()
   switch (nvsErr) {
     case ERR_OK:
       fresh_credentials = false;
-      ESP_LOGI("main", "SSID: %s \nPASS: %s \nIP: %s", memory_wifi_ssid, memory_wifi_password, memory_server_ip);
+      ESP_LOGI("main", "SSID: %s \nPASS: %s \nSERVER IP: %s", memory_wifi_ssid, memory_wifi_password, memory_server_ip);
       onWifiCredentialsReceived(memory_wifi_ssid, memory_wifi_password, memory_server_ip);
       break;
     default:
@@ -75,7 +75,7 @@ static void onWifiNotConnected(void)
 
 static void onWifiConnected(char *ip_address)
 {
-  cleanupBluetooth(fresh_credentials);
+  cleanupBluetooth();
 
   vTaskDelay(100 / portTICK_PERIOD_MS); // Wait for bluetooth cleanup
 
