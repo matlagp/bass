@@ -5,6 +5,11 @@ static void processIrCmd(uint32_t, bool);
 
 static TickType_t lastCmdTickCount = 0;
 
+static char topic_volume[32];
+static char topic_bass[30];
+static char topic_mid[29];
+static char topic_trebble[33];
+
 TaskHandle_t createIrTask() {
   xTaskHandle xHandle = NULL;
 
@@ -24,6 +29,11 @@ static void irTask(void *_) {
   uint32_t length = 0;
   rmt_item32_t *ir_data = NULL;
   RingbufHandle_t buffer = NULL;
+
+  snprintf(topic_volume, 32, "/nodes/%08X/settings/volume", node_id);
+  snprintf(topic_bass, 30, "/nodes/%08X/settings/bass", node_id);
+  snprintf(topic_mid, 29, "/nodes/%08X/settings/mid", node_id);
+  snprintf(topic_trebble, 33, "/nodes/%08X/settings/trebble", node_id);
 
   ir_parser_config_t ir_parser_config = IR_PARSER_DEFAULT_CONFIG((ir_dev_t)IR_CHANNEL_NUM);
   ir_parser_config.flags |= IR_TOOLS_FLAGS_PROTO_EXT;
@@ -54,16 +64,6 @@ static void processIrCmd(uint32_t cmd, bool repeat) {
     return;
   }
   lastCmdTickCount = tickCount;
-
-  char topic_volume[32];
-  char topic_bass[30];
-  char topic_mid[29];
-  char topic_trebble[33];
-
-  snprintf(topic_volume, 32, "/nodes/%08X/settings/volume", node_id);
-  snprintf(topic_bass, 30, "/nodes/%08X/settings/bass", node_id);
-  snprintf(topic_mid, 29, "/nodes/%08X/settings/mid", node_id);
-  snprintf(topic_trebble, 33, "/nodes/%08X/settings/trebble", node_id);
 
   switch (cmd) {
     case 0xf807:  // Volume down
