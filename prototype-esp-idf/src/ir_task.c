@@ -6,10 +6,10 @@ static int mqtt_publish(const char *, const char *);
 
 static TickType_t lastCmdTickCount = 0;
 
-static char topic_volume[32];
-static char topic_bass[30];
-static char topic_mid[29];
-static char topic_trebble[33];
+static char topic_volume[27];
+static char topic_bass[25];
+static char topic_mid[24];
+static char topic_trebble[28];
 
 typedef enum ir_code_t {
     VOL_DOWN = 0xf807,
@@ -42,10 +42,10 @@ static void irTask(void *_) {
   rmt_item32_t *ir_data = NULL;
   RingbufHandle_t buffer = NULL;
 
-  snprintf(topic_volume, 32, "/nodes/%08X/settings/volume", node_id);
-  snprintf(topic_bass, 30, "/nodes/%08X/settings/bass", node_id);
-  snprintf(topic_mid, 29, "/nodes/%08X/settings/mid", node_id);
-  snprintf(topic_trebble, 33, "/nodes/%08X/settings/trebble", node_id);
+  snprintf(topic_volume, 27, "/nodes/%08X/set/volume", node_id);
+  snprintf(topic_bass, 25, "/nodes/%08X/set/bass", node_id);
+  snprintf(topic_mid, 24, "/nodes/%08X/set/mid", node_id);
+  snprintf(topic_trebble, 28, "/nodes/%08X/set/trebble", node_id);
 
   ir_parser_config_t ir_parser_config = IR_PARSER_DEFAULT_CONFIG((ir_dev_t)IR_CHANNEL_NUM);
   ir_parser_config.flags |= IR_TOOLS_FLAGS_PROTO_EXT;
@@ -82,25 +82,25 @@ static void processIrCmd(uint32_t cmd, bool repeat) {
       mqtt_publish(topic_volume, "-5");
       break;
     case VOL_UP:
-      mqtt_publish(topic_volume, "5");
+      mqtt_publish(topic_volume, "+5");
       break;
     case BASS_DOWN:
       mqtt_publish(topic_bass, "-0.5");
       break;
     case BASS_UP:
-      mqtt_publish(topic_bass, "0.5");
+      mqtt_publish(topic_bass, "+0.5");
       break;
     case MID_DOWN:
       mqtt_publish(topic_mid, "-0.5");
       break;
     case MID_UP:
-      mqtt_publish(topic_mid, "0.5");
+      mqtt_publish(topic_mid, "+0.5");
       break;
     case TREBBLE_DOWN:
       mqtt_publish(topic_trebble, "-0.5");
       break;
     case TREBBLE_UP:
-      mqtt_publish(topic_trebble, "0.5");
+      mqtt_publish(topic_trebble, "+0.5");
       break;
     default:
       ESP_LOGI(IR_TASK_TAG, "Unsupported command: %04x", cmd);
@@ -109,5 +109,5 @@ static void processIrCmd(uint32_t cmd, bool repeat) {
 }
 
 static int mqtt_publish(const char *topic, const char *message) {
-  return esp_mqtt_client_publish(mqtt_client, topic, message, 0, 1, 1);
+  return esp_mqtt_client_publish(mqtt_client, topic, message, 0, 1, 0);
 }

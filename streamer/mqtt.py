@@ -28,7 +28,7 @@ class MQTTClient(Thread):
             if topic[2] == 'state':
                self._on_state(node_id, msg)
 
-            elif topic[2] == 'settings':
+            elif topic[2] == 'get':
                 if topic[3] == 'volume':
                     self._on_volume(node_id, int(msg))
 

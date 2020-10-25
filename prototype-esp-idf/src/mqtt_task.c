@@ -71,10 +71,10 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
   case MQTT_EVENT_CONNECTED:
   {
     char topic_state[30];
-    char topic_settings[35];
+    char topic_settings[22];
 
     snprintf(topic_state, 30, "/nodes/%08X/state", node_id);
-    snprintf(topic_settings, 35, "/nodes/%08X/settings/#", node_id);
+    snprintf(topic_settings, 22, "/nodes/%08X/get/#", node_id);
 
     ESP_LOGI(MQTT_TASK_TAG, "MQTT_EVENT_CONNECTED");
     msg_id = esp_mqtt_client_publish(client, topic_state, node_ip_address, 0, 1, 1);
