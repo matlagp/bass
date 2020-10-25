@@ -2,6 +2,7 @@
 
 static void irTask(void *);
 static void processIrCmd(uint32_t, bool);
+static int mqtt_publish(const char *, const char *);
 
 static TickType_t lastCmdTickCount = 0;
 
@@ -78,31 +79,35 @@ static void processIrCmd(uint32_t cmd, bool repeat) {
 
   switch (cmd) {
     case VOL_DOWN:
-      esp_mqtt_client_publish(mqtt_client, topic_volume, "-5", 2, 1, 1);
+      mqtt_publish(topic_volume, "-5");
       break;
     case VOL_UP:
-      esp_mqtt_client_publish(mqtt_client, topic_volume, "5", 1, 1, 1);
+      mqtt_publish(topic_volume, "5");
       break;
     case BASS_DOWN:
-      esp_mqtt_client_publish(mqtt_client, topic_bass, "-0.5", 4, 1, 1);
+      mqtt_publish(topic_bass, "-0.5");
       break;
     case BASS_UP:
-      esp_mqtt_client_publish(mqtt_client, topic_bass, "0.5", 3, 1, 1);
+      mqtt_publish(topic_bass, "0.5");
       break;
     case MID_DOWN:
-      esp_mqtt_client_publish(mqtt_client, topic_mid, "-0.5", 4, 1, 1);
+      mqtt_publish(topic_mid, "-0.5");
       break;
     case MID_UP:
-      esp_mqtt_client_publish(mqtt_client, topic_mid, "0.5", 3, 1, 1);
+      mqtt_publish(topic_mid, "0.5");
       break;
     case TREBBLE_DOWN:
-      esp_mqtt_client_publish(mqtt_client, topic_trebble, "-0.5", 4, 1, 1);
+      mqtt_publish(topic_trebble, "-0.5");
       break;
     case TREBBLE_UP:
-      esp_mqtt_client_publish(mqtt_client, topic_trebble, "0.5", 3, 1, 1);
+      mqtt_publish(topic_trebble, "0.5");
       break;
     default:
       ESP_LOGI(IR_TASK_TAG, "Unsupported command: %04x", cmd);
       break;
   }
+}
+
+static int mqtt_publish(const char *topic, const char *message) {
+  return esp_mqtt_client_publish(mqtt_client, topic, message, 0, 1, 1);
 }
