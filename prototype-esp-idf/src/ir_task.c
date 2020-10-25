@@ -10,6 +10,17 @@ static char topic_bass[30];
 static char topic_mid[29];
 static char topic_trebble[33];
 
+typedef enum ir_code_t {
+    VOL_DOWN = 0xf807,
+    VOL_UP = 0xea15,
+    BASS_DOWN = 0xf30c,
+    BASS_UP = 0xe718,
+    MID_DOWN = 0xf708,
+    MID_UP = 0xe31c,
+    TREBBLE_DOWN = 0xbd42,
+    TREBBLE_UP = 0xad52
+} ir_code_t;
+
 TaskHandle_t createIrTask() {
   xTaskHandle xHandle = NULL;
 
@@ -66,28 +77,28 @@ static void processIrCmd(uint32_t cmd, bool repeat) {
   lastCmdTickCount = tickCount;
 
   switch (cmd) {
-    case 0xf807:  // Volume down
+    case VOL_DOWN:
       esp_mqtt_client_publish(mqtt_client, topic_volume, "-5", 2, 1, 1);
       break;
-    case 0xea15:  // Volume up
+    case VOL_UP:
       esp_mqtt_client_publish(mqtt_client, topic_volume, "5", 1, 1, 1);
       break;
-    case 0xf30c:  // Bass down
+    case BASS_DOWN:
       esp_mqtt_client_publish(mqtt_client, topic_bass, "-0.5", 4, 1, 1);
       break;
-    case 0xe718:  // Bass up
+    case BASS_UP:
       esp_mqtt_client_publish(mqtt_client, topic_bass, "0.5", 3, 1, 1);
       break;
-    case 0xf708:  // Mid down
+    case MID_DOWN:
       esp_mqtt_client_publish(mqtt_client, topic_mid, "-0.5", 4, 1, 1);
       break;
-    case 0xe31c:  // Mid up
+    case MID_UP:
       esp_mqtt_client_publish(mqtt_client, topic_mid, "0.5", 3, 1, 1);
       break;
-    case 0xbd42:  // Trebble down
+    case TREBBLE_DOWN:
       esp_mqtt_client_publish(mqtt_client, topic_trebble, "-0.5", 4, 1, 1);
       break;
-    case 0xad52:  // Trebble up
+    case TREBBLE_UP:
       esp_mqtt_client_publish(mqtt_client, topic_trebble, "0.5", 3, 1, 1);
       break;
     default:
