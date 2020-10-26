@@ -3,6 +3,7 @@
 #include <freertos/task.h>
 #include "lwip/sockets.h"
 #include "mqtt_client.h"
+#include "node_attributes.h"
 
 #ifndef MQTT_TASK_H
 #define MQTT_TASK_H
@@ -10,13 +11,15 @@
 #define MQTT_TASK_TAG "mqttTask"
 
 /*
+MQTT client handle
+*/
+esp_mqtt_client_handle_t mqtt_client;
+
+/*
 Initializes the MQTT client and creates a task that handles the connection.
 WiFi disconnects and reconnects have to be handled manually.
-
-@param ip_address The IP address of the node.
-@param server_ip_address The IP address of the MQTT broker.
 */
-TaskHandle_t createMqttTask(char *ip_address, char *server_ip_address);
+TaskHandle_t createMqttTask();
 
 /*
 Disconnect the MQTT client. Call after a WiFi disconnect.
@@ -26,9 +29,7 @@ void disconnectMqtt();
 
 /*
 Reconnects the MQTT client. Call after a WiFi reconnect.
-
-@param ip_address The IP address of the node.
 */
-void reconnectMqtt(char *ip_address);
+void reconnectMqtt();
 
 #endif

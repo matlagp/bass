@@ -1,7 +1,5 @@
 #include "main.h"
 
-#include "bluetooth_task.h"
-
 RingbufHandle_t buffer;
 
 static char *received_server_ip;
@@ -35,13 +33,21 @@ static void onWifiConnected(char *ip_address)
 
   vTaskDelay(100 / portTICK_PERIOD_MS); // Wait for bluetooth cleanup
 
-  wm8960_init();
-  wm8960_set_vol(255);
+  setNodeId();
+  setNodeIpAddress(ip_address);
+  setMqttServerUri(received_server_ip);
+
+  #ifdef USE_WM8960
+    wm8960_init();
+    wm8960_set_vol(255);
+  #endif
   init_i2s();
+  init_ir();
 
   createUdpTask(buffer);
   createI2sTask(buffer);
   createMqttTask(ip_address, received_server_ip);
+  createIrTask();
 }
 
 static void onWifiDisconnected(void)
@@ -51,5 +57,6 @@ static void onWifiDisconnected(void)
 
 static void onWifiReconnected(char *ip_address)
 {
-  reconnectMqtt(ip_address);
+  setNodeIpAddress(ip_address);
+  reconnectMqtt();
 }

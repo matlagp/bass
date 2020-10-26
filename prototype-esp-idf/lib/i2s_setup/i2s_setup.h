@@ -8,9 +8,9 @@
 #define SAMPLE_RATE (44100)
 #define I2S_NUM (0)
 #define WAVE_FREQ_HZ (100)
-#define I2S_BCK_IO (GPIO_NUM_13)
-#define I2S_WS_IO (GPIO_NUM_15)
-#define I2S_DO_IO (GPIO_NUM_17)
+#define I2S_BCK_IO (GPIO_NUM_12)
+#define I2S_WS_IO (GPIO_NUM_13)
+#define I2S_DO_IO (GPIO_NUM_14)
 #define I2S_DI_IO (-1)
 
 #define DMA_BUFFER_COUNT (30)

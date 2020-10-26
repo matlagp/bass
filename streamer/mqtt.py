@@ -16,7 +16,8 @@ class MQTTClient(Thread):
         self.client.loop_forever()
 
     def _on_connect(self, client, userdata, flags, rc):
-        client.subscribe("/nodes/#")
+        client.subscribe("/nodes/+/state")
+        client.subscribe("/nodes/+/get/#")
 
     def _on_message(self, client, userdata, message):
         try:
@@ -28,7 +29,7 @@ class MQTTClient(Thread):
             if topic[2] == 'state':
                self._on_state(node_id, msg)
 
-            elif topic[2] == 'settings':
+            elif topic[2] == 'get':
                 if topic[3] == 'volume':
                     self._on_volume(node_id, int(msg))
 
