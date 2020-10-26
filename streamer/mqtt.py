@@ -16,7 +16,8 @@ class MQTTClient(Thread):
         self.client.loop_forever()
 
     def _on_connect(self, client, userdata, flags, rc):
-        client.subscribe("/nodes/#")
+        client.subscribe("/nodes/+/state")
+        client.subscribe("/nodes/+/get/#")
 
     def _on_message(self, client, userdata, message):
         try:
