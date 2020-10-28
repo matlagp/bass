@@ -9,6 +9,7 @@
 #include "ir_setup.h"
 
 #include "ring_buffer.h"
+#include "persistent_credentials.h"
 
 #include "node_attributes.h"
 #include "common_init.h"

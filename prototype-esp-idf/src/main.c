@@ -2,7 +2,7 @@
 
 RingbufHandle_t buffer;
 
-static char *received_server_ip;
+static bool fresh_credentials;
 
 void app_main()
 {
@@ -12,18 +12,33 @@ void app_main()
 
   buffer = createRingBuffer();
 
-  createBluetoothTask(onWifiCredentialsReceived);
+  switch (loadPersistedCredentials()) {
+    case ESP_OK:
+      fresh_credentials = false;
+      onWifiCredentialsReceived(memory_wifi_ssid, memory_wifi_password, memory_server_ip);
+      break;
+    default:
+      fresh_credentials = true;
+      createBluetoothTask(onWifiCredentialsReceived);
+  }
 }
 
 static void onWifiCredentialsReceived(char *ssid, char *password, char *server_ip)
 {
-  received_server_ip = server_ip;
+  setMqttServerUri(server_ip);
 
   createWifiTask(ssid, password, onWifiNotConnected, onWifiConnected, onWifiDisconnected, onWifiReconnected);
+
+  if (fresh_credentials) {
+    saveCredentials(ssid, password, server_ip);
+  } else {
+    freeCredentialsMemory();
+  }
 }
 
 static void onWifiNotConnected(void)
 {
+  fresh_credentials = true;
   retryBluetooth();
 }
 
@@ -35,7 +50,6 @@ static void onWifiConnected(char *ip_address)
 
   setNodeId();
   setNodeIpAddress(ip_address);
-  setMqttServerUri(received_server_ip);
 
   #ifdef USE_WM8960
     wm8960_init();
@@ -46,7 +60,7 @@ static void onWifiConnected(char *ip_address)
 
   createUdpTask(buffer);
   createI2sTask(buffer);
-  createMqttTask(ip_address, received_server_ip);
+  createMqttTask();
   createIrTask();
 }
 
