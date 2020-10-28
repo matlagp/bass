@@ -2,8 +2,6 @@
 
 RingbufHandle_t buffer;
 
-static char *received_server_ip;
-
 static bool fresh_credentials;
 static nvs_handle_t nvsHandle;
 static const char *credentials_store = "credentials";
@@ -56,15 +54,19 @@ void app_main()
 
 static void onWifiCredentialsReceived(char *ssid, char *password, char *server_ip)
 {
-  received_server_ip = server_ip;
+  setMqttServerUri(server_ip);
+
+  createWifiTask(ssid, password, onWifiNotConnected, onWifiConnected, onWifiDisconnected, onWifiReconnected);
 
   if (fresh_credentials) {
     nvs_set_str(nvsHandle, wifi_ssid_key, ssid);
     nvs_set_str(nvsHandle, wifi_password_key, password);
     nvs_set_str(nvsHandle, server_ip_key, server_ip);
+  } else {
+    free(memory_wifi_ssid);
+    free(memory_wifi_password);
+    free(memory_server_ip);
   }
-
-  createWifiTask(ssid, password, onWifiNotConnected, onWifiConnected, onWifiDisconnected, onWifiReconnected);
 }
 
 static void onWifiNotConnected(void)
@@ -81,7 +83,6 @@ static void onWifiConnected(char *ip_address)
 
   setNodeId();
   setNodeIpAddress(ip_address);
-  setMqttServerUri(received_server_ip);
 
   #ifdef USE_WM8960
     wm8960_init();
@@ -92,7 +93,7 @@ static void onWifiConnected(char *ip_address)
 
   createUdpTask(buffer);
   createI2sTask(buffer);
-  createMqttTask(ip_address, received_server_ip);
+  createMqttTask();
   createIrTask();
 }
 
