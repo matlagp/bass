@@ -43,9 +43,10 @@ button, .btn {
     transition-duration: 100ms;
 }
 
-button:hover, .btn:hover {
+button:hover, .btn:hover, button:focus, .btn:focus {
     cursor: pointer;
     box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.5);
+    outline: none;
     transform: scale(1.02);
 }
 
@@ -83,8 +84,9 @@ iframe {
     transition-duration: 100ms;
 }
 
-.navigation > a:hover {
+.navigation > a:hover, .navigation > a:focus {
     text-decoration: underline;
+    outline: none;
     transform: scale(1.02);
 }
 
