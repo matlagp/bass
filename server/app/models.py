@@ -9,3 +9,7 @@ class Node:
 
     def __str__(self):
         return f"Node(id={self.id}, ip={self.ip}, volume={self.volume}, bass={self.bass}, mid={self.mid}, trebble={self.trebble})"
+
+    @property
+    def name(self):
+        return f"Node #{self.id}"

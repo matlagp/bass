@@ -40,33 +40,50 @@ def nodes_update(node_id=0):
 
     def _check_range(value, min_value, max_value, comment):
         if value < min_value or value > max_value:
-            errors[comment.lower()] = f"{comment}({value}) not between {min_value} and {max_value}"
+            errors[comment.lower()] = f"should be between {min_value} and {max_value}"
             return False
         return True
 
     if (request.values['volume']):
-        volume = int(request.values['volume'])
-        if volume != node.volume and _check_range(volume, 0, 100, "Volume"):
-            new_volume = True
-            node.volume = volume
+        node.volume = request.values['volume']
+        try:
+            volume = int(request.values['volume'])
+            if volume != node.volume and _check_range(volume, 0, 100, "Volume"):
+                new_volume = True
+                node.volume = volume
+        except ValueError:
+            errors['volume'] = "should be an integer"
 
     if (request.values['bass']):
-        bass = float(request.values['bass'])
-        if bass != node.bass and _check_range(bass, -24, 12, "Bass"):
-            new_bass = True
-            node.bass = bass
+        node.bass = request.values['bass']
+        try:
+            bass = float(request.values['bass'])
+            if bass != node.bass and _check_range(bass, -24, 12, "Bass"):
+                new_bass = True
+                node.bass = bass
+        except ValueError:
+            errors['bass'] = "should be a number"
 
     if (request.values['mid']):
-        mid = float(request.values['mid'])
-        if mid != node.mid and _check_range(mid, -24, 12, "Mid"):
-            new_mid = True
-            node.mid = mid
+        node.mid = request.values['mid']
+        try:
+            mid = float(request.values['mid'])
+            if mid != node.mid and _check_range(mid, -24, 12, "Mid"):
+                new_mid = True
+                node.mid = mid
+        except ValueError:
+            errors['mid'] = "should be a number"
 
     if (request.values['trebble']):
-        trebble = float(request.values['trebble'])
-        if trebble != node.trebble and _check_range(trebble, -24, 12, "Trebble"):
-            new_trebble = True
-            node.trebble = trebble
+        node.trebble = request.values['trebble']
+        try:
+            trebble = float(request.values['trebble'])
+            if trebble != node.trebble and _check_range(trebble, -24, 12, "Trebble"):
+                new_trebble = True
+                node.trebble = trebble
+        except ValueError:
+            errors['trebble'] = "should be a number"
+
 
     if not errors:
         node_hex_id = "{0:08X}"
@@ -79,14 +96,18 @@ def nodes_update(node_id=0):
         if new_trebble:
             MQTTClient._publish_node_setting(mqtt_client.client, node_hex_id, 'trebble', node.trebble)
         node_repository.update(node)
-        return render_template('nodes/show.html', node=node)
+        nodes = node_repository.all()
+        return render_template('nodes/index.html', nodes=nodes)
     else:
-        return render_template('nodes/edit.html', node=node, errors=errors)
+        nodes = node_repository.all()
+        return render_template('nodes/index.html', nodes=nodes, edited_node=node, errors=errors)
 
 
 @app.route('/nodes/<node_id>/edit/')
 def nodes_edit(node_id=0):
-    return render_template('nodes/edit.html', node=node_repository.find(node_id), errors={})
+    nodes = node_repository.all()
+    edited_node = node_repository.find(node_id)
+    return render_template('nodes/index.html', nodes=nodes, edited_node=edited_node, errors={})
 
 
 @app.route('/bt/')

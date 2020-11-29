@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block title %}
 Nodes
@@ -8,7 +8,60 @@ Nodes
 
 <div class="nodes">
   {% for node in nodes %}
-  <a href="/nodes/{{node.id}}/edit" class="node">
+  {% if edited_node and edited_node.id == node.id %}
+  <form action="/nodes/{{ node.id }}/" method="POST" class="node node-edited">
+    <!-- <div class="node-name"> -->
+      <!--   <input class="node-name" value="{{node.name}}"> -->
+      <!-- </div> -->
+    <p class="node-name">Node #{{ edited_node.id }}</p>
+    {% if edited_node.ip != "0" %}
+    <p>Available at {{ edited_node.ip }}</p>
+    {% else %}
+    <p>Unavailable</p>
+    {% endif %}
+    <div class="node-attr">
+      <h2>Volume:</h2>
+      <input id="volume" name="volume" type="text" placeholder="{{ edited_node.volume }}">
+      %
+      {% if errors.get("volume") is not none %}
+      <p>({{ errors["volume"] }})</p>
+      {% endif %}
+    </div>
+    <div class="node-attr">
+      <h2>Bass:</h2>
+      <input id="bass" name="bass" type="text" value="{{ edited_node.bass }}">
+      dB
+      {% if errors.get("bass") is not none %}
+      <p>({{ errors["bass"] }})</p>
+      {% endif %}
+    </div>
+    <div class="node-attr">
+      <h2>Mid:</h2>
+      <input id="mid" name="mid" type="text" value="{{ edited_node.mid }}">
+      dB
+      {% if errors.get("mid") is not none %}
+      <p>({{ errors["mid"] }})</p>
+      {% endif %}
+    </div>
+    <div class="node-attr">
+      <h2>Trebble:</h2>
+      <input id="trebble" name="trebble" type="text" value="{{ edited_node.trebble }}">
+      dB
+      {% if errors.get("trebble") is not none %}
+      <p>({{ errors["trebble"] }})</p>
+      {% endif %}
+    </div>
+    <div class="node-attr node-attr-id">
+      <h2>ID:</h2>
+      <p>{{ edited_node.id }}</p>
+    </div>
+    <div class="node-buttons">
+      <a href="/nodes" class="btn">Cancel</a>
+      <button type="submit">Save</button>
+    </div>
+  </form>
+  {% else %}
+  <div class="node">
     <p class="node-name">Node #{{ node.id }}</p>
     {% if node.ip != "0" %}
     <p>Available at {{ node.ip }}</p>
@@ -35,7 +88,11 @@ Nodes
       <h2>ID:</h2>
       <p>{{ node.id }}</p>
     </div>
-  </a>
+    <div class="node-buttons">
+      <a href="/nodes/{{node.id}}/edit" class="btn">Edit</a>
+    </div>
+  </div>
+  {% endif %}
   {% endfor %}
 </div>
 
