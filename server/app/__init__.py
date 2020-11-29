@@ -33,10 +33,10 @@ def nodes_show(node_id=0):
 @app.route('/nodes/<node_id>/', methods=['POST'])
 def nodes_update(node_id=0):
     errors = {}
+    unsaved = request.values
+    new_volume, new_bass, new_mid, new_trebble = False, False, False, False
 
     node = node_repository.find(node_id)
-
-    new_volume, new_bass, new_mid, new_trebble = False, False, False, False
 
     def _check_range(value, min_value, max_value, comment):
         if value < min_value or value > max_value:
@@ -45,7 +45,6 @@ def nodes_update(node_id=0):
         return True
 
     if (request.values['volume']):
-        node.volume = request.values['volume']
         try:
             volume = int(request.values['volume'])
             if volume != node.volume and _check_range(volume, 0, 100, "Volume"):
@@ -55,7 +54,6 @@ def nodes_update(node_id=0):
             errors['volume'] = "should be an integer"
 
     if (request.values['bass']):
-        node.bass = request.values['bass']
         try:
             bass = float(request.values['bass'])
             if bass != node.bass and _check_range(bass, -24, 12, "Bass"):
@@ -65,7 +63,6 @@ def nodes_update(node_id=0):
             errors['bass'] = "should be a number"
 
     if (request.values['mid']):
-        node.mid = request.values['mid']
         try:
             mid = float(request.values['mid'])
             if mid != node.mid and _check_range(mid, -24, 12, "Mid"):
@@ -75,7 +72,6 @@ def nodes_update(node_id=0):
             errors['mid'] = "should be a number"
 
     if (request.values['trebble']):
-        node.trebble = request.values['trebble']
         try:
             trebble = float(request.values['trebble'])
             if trebble != node.trebble and _check_range(trebble, -24, 12, "Trebble"):
@@ -86,21 +82,20 @@ def nodes_update(node_id=0):
 
 
     if not errors:
-        node_hex_id = "{0:08X}"
         if new_volume:
-            MQTTClient._publish_node_setting(mqtt_client.client, node_hex_id, 'volume', node.volume)
+            mqtt_client.publish_node_setting(node.hex_id, 'volume', node.volume)
         if new_bass:
-            MQTTClient._publish_node_setting(mqtt_client.client, node_hex_id, 'bass', node.bass)
+            mqtt_client.publish_node_setting(node.hex_id, 'bass', node.bass)
         if new_mid:
-            MQTTClient._publish_node_setting(mqtt_client.client, node_hex_id, 'mid', node.mid)
+            mqtt_client.publish_node_setting(node.hex_id, 'mid', node.mid)
         if new_trebble:
-            MQTTClient._publish_node_setting(mqtt_client.client, node_hex_id, 'trebble', node.trebble)
+            mqtt_client.publish_node_setting(node.hex_id, 'trebble', node.trebble)
         node_repository.update(node)
         nodes = node_repository.all()
         return render_template('nodes/index.html', nodes=nodes)
     else:
         nodes = node_repository.all()
-        return render_template('nodes/index.html', nodes=nodes, edited_node=node, errors=errors)
+        return render_template('nodes/index.html', nodes=nodes, edited_node=node, errors=errors, unsaved=unsaved)
 
 
 @app.route('/nodes/<node_id>/edit/')

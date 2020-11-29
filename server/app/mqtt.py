@@ -19,6 +19,9 @@ class MQTTClient(threading.Thread):
         self.client.connect('127.0.0.1', 1883, 60)
         self.client.loop_forever()
 
+    def publish_node_setting(self, node_hex_id, setting, message):
+        __class__._publish_node_setting(self.client, node_hex_id, setting, message)
+
     def _on_connect(client, userdata, flags, rc):
         client.subscribe("/nodes/+/state")
         client.subscribe("/nodes/+/set/#")
