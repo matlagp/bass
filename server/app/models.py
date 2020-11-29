@@ -17,3 +17,7 @@ class Node:
     @property
     def name(self):
         return f"Node #{self.hex_id}"
+
+    @name.setter
+    def name(self, new_name):
+        print(new_name)

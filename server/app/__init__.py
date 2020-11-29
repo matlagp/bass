@@ -46,6 +46,9 @@ def nodes_update(node_id=0):
             return False
         return True
 
+    if (request.values['name']):
+        node.name = request.values['name']
+
     if (request.values['volume']):
         try:
             volume = int(request.values['volume'])

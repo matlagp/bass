@@ -10,10 +10,9 @@ Nodes
   {% for node in nodes %}
   {% if edited_node and edited_node.id == node.id %}
   <form action="/nodes/{{ node.id }}/" method="POST" class="node node-edited {% if node.ip == "0" %} node-unavailable {% endif %}">
-    <!-- <div class="node-name"> -->
-      <!--   <input class="node-name" value="{{node.name}}"> -->
-      <!-- </div> -->
-    <p class="node-name">{{ node.name }}</p>
+    <div class="node-name">
+      <input id="name" name="name" type="text" placeholder="{{node.name}}" value="{{ unsaved.get('name') is not none and unsaved['name'] or '' }}" class="node-name-input">
+    </div>
     {% if edited_node.ip != "0" %}
     <p>Available at {{ edited_node.ip }}</p>
     {% else %}
