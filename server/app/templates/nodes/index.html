@@ -5,16 +5,38 @@ Nodes
 {% endblock %}
 
 {% block content %}
-<h1>Nodes</h1>
 
-<ul>
+<div class="nodes">
   {% for node in nodes %}
-    <li>
-        <p>{{ node }}</p>
-        <a href="/nodes/{{node.id}}">Show</a>
-        <a href="/nodes/{{node.id}}/edit">Edit</a>
-    </li>
+  <a href="/nodes/{{node.id}}/edit" class="node">
+    <p class="node-name">Node #{{ node.id }}</p>
+    {% if node.ip != "0" %}
+    <p>Available at {{ node.ip }}</p>
+    {% else %}
+    <p>Unavailable</p>
+    {% endif %}
+    <div class="node-attr">
+      <h2>Volume:</h2>
+      <p>{{ node.volume }}%</p>
+    </div>
+    <div class="node-attr">
+      <h2>Bass:</h2>
+      <p>{{ "{0:+}".format(node.bass) }}dB</p>
+    </div>
+    <div class="node-attr">
+      <h2>Mid:</h2>
+      <p>{{ "{0:+}".format(node.mid) }}dB</p>
+    </div>
+    <div class="node-attr">
+      <h2>Trebble:</h2>
+      <p>{{ "{0:+}".format(node.trebble) }}dB</p>
+    </div>
+    <div class="node-attr node-attr-id">
+      <h2>ID:</h2>
+      <p>{{ node.id }}</p>
+    </div>
+  </a>
   {% endfor %}
-</ul>
+</div>
 
 {% endblock %}

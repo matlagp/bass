@@ -4,16 +4,18 @@
   <head>
     <title>{% block title %}{% endblock %} - BASS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/reset.css">
+    <link rel="stylesheet" href="/static/styles.css">
   </head>
 
-  <nav>
-    <ul>
-      <li><a href="/nodes">Nodes</a></li>
-      <li><a href="/bt">New Nodes</a></li>
-    </ul>
-  </nav>
-
   <body>
+    <div class="header">BASS</div>
+    <nav class="navigation">
+      <a class="active" href="/nodes">Nodes</a>
+      <a href="/bt">Add Nodes</a>
+      <a href="#">Player</a>
+    </nav>
+
     {% block content %}{% endblock %}
   </body>
 </html>
