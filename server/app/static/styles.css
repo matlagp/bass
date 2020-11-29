@@ -55,7 +55,10 @@ iframe {
 }
 
 .header {
-    text-align: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
     font-size: 3rem;
     padding: 1rem;
     font-family: 'Varela Round', sans-serif;
@@ -116,6 +119,10 @@ iframe {
     .node {
         width: calc(600px - 6rem);
     }
+}
+
+.node-unavailable {
+    background-color: rgba(0, 0, 0, 0.1);
 }
 
 .node-name {

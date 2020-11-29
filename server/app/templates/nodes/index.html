@@ -9,7 +9,7 @@ Nodes
 <div class="nodes">
   {% for node in nodes %}
   {% if edited_node and edited_node.id == node.id %}
-  <form action="/nodes/{{ node.id }}/" method="POST" class="node node-edited">
+  <form action="/nodes/{{ node.id }}/" method="POST" class="node node-edited {% if node.ip == "0" %} node-unavailable {% endif %}">
     <!-- <div class="node-name"> -->
       <!--   <input class="node-name" value="{{node.name}}"> -->
       <!-- </div> -->
@@ -61,7 +61,7 @@ Nodes
     </div>
   </form>
   {% else %}
-  <div class="node">
+  <div class="node {% if node.ip == "0" %} node-unavailable {% endif %}">
     <p class="node-name">{{ node.name }}</p>
     {% if node.ip != "0" %}
     <p>Available at {{ node.ip }}</p>
