@@ -155,6 +155,7 @@ def bt_pair(bt_addr, bt_port=1):
 
 @app.route('/player/')
 def player():
-    return render_template('player/index.html')
+    player_url = os.getenv('PLAYER_URL')
+    return render_template('player/index.html', player_url=player_url)
 
 node_repository.create_database()
