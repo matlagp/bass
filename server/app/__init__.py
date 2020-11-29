@@ -36,6 +36,8 @@ def nodes_update(node_id=0):
 
     node = node_repository.find(node_id)
 
+    new_volume, new_bass, new_mid, new_trebble = False, False, False, False
+
     def _check_range(value, min_value, max_value, comment):
         if value < min_value or value > max_value:
             errors[comment.lower()] = f"{comment}({value}) not between {min_value} and {max_value}"
@@ -45,28 +47,38 @@ def nodes_update(node_id=0):
     if (request.values['volume']):
         volume = int(request.values['volume'])
         if volume != node.volume and _check_range(volume, 0, 100, "Volume"):
+            new_volume = True
             node.volume = volume
-            mqtt_client.client.publish("/nodes/{0:08X}/settings/volume".format(node.id), node.volume, retain=True)
 
     if (request.values['bass']):
         bass = float(request.values['bass'])
         if bass != node.bass and _check_range(bass, -24, 12, "Bass"):
+            new_bass = True
             node.bass = bass
-            mqtt_client.client.publish("/nodes/{0:08X}/settings/bass".format(node.id), node.bass, retain=True)
 
     if (request.values['mid']):
         mid = float(request.values['mid'])
         if mid != node.mid and _check_range(mid, -24, 12, "Mid"):
+            new_mid = True
             node.mid = mid
-            mqtt_client.client.publish("/nodes/{0:08X}/settings/mid".format(node.id), node.mid, retain=True)
 
     if (request.values['trebble']):
         trebble = float(request.values['trebble'])
         if trebble != node.trebble and _check_range(trebble, -24, 12, "Trebble"):
+            new_trebble = True
             node.trebble = trebble
-            mqtt_client.client.publish("/nodes/{0:08X}/settings/trebble".format(node.id), node.trebble, retain=True)
 
     if not errors:
+        node_hex_id = "{0:08X}"
+        if new_volume:
+            MQTTClient._publish_node_setting(mqtt_client.client, node_hex_id, 'volume', node.volume)
+        if new_bass:
+            MQTTClient._publish_node_setting(mqtt_client.client, node_hex_id, 'bass', node.bass)
+        if new_mid:
+            MQTTClient._publish_node_setting(mqtt_client.client, node_hex_id, 'mid', node.mid)
+        if new_trebble:
+            MQTTClient._publish_node_setting(mqtt_client.client, node_hex_id, 'trebble', node.trebble)
+        node_repository.update(node)
         return render_template('nodes/show.html', node=node)
     else:
         return render_template('nodes/edit.html', node=node, errors=errors)
