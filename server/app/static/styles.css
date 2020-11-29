@@ -148,6 +148,10 @@ iframe {
     align-self: flex-end;
 }
 
+.node-attr-error > p {
+    color: red;
+}
+
 input[type="text"] {
     width: 5rem;
     box-sizing: border-box;
@@ -161,9 +165,17 @@ input[type="text"] {
     padding-right: 0.25rem;
 }
 
+.node-attr-error > input[type="text"] {
+    box-shadow: 0 0 0 1px red;
+}
+
 input[type="text"]:active, input[type="text"]:focus {
     box-shadow: 0 0 0 2px black;
     outline: none;
+}
+
+.node-attr-error > input[type="text"]:active, .node-attr-error > input[type="text"]:focus {
+    box-shadow: 0 0 0 2px red;
 }
 
 input[type="text"].node-name-input {
