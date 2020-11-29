@@ -13,7 +13,7 @@ Nodes
     <!-- <div class="node-name"> -->
       <!--   <input class="node-name" value="{{node.name}}"> -->
       <!-- </div> -->
-    <p class="node-name">Node #{{ edited_node.id }}</p>
+    <p class="node-name">{{ node.name }}</p>
     {% if edited_node.ip != "0" %}
     <p>Available at {{ edited_node.ip }}</p>
     {% else %}
@@ -53,7 +53,7 @@ Nodes
     </div>
     <div class="node-attr node-attr-id">
       <h2>ID:</h2>
-      <p>{{ edited_node.id }}</p>
+      <p>{{ edited_node.hex_id }}</p>
     </div>
     <div class="node-buttons">
       <a href="/nodes" class="btn">Cancel</a>

@@ -15,10 +15,10 @@ mqtt_client.start()
 node_repository = NodeRepository()
 
 
+@app.route('/')
 @app.errorhandler(404)
-def not_found(error):
-    return render_template('404.html'), 404
-
+def redirect_to_nodes(*args):
+    return redirect('/nodes/')
 
 @app.route('/nodes/')
 def nodes_index():
