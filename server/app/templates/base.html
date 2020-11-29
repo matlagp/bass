@@ -11,9 +11,9 @@
   <body>
     <div class="header">BASS</div>
     <nav class="navigation">
-      <a class="active" href="/nodes">Nodes</a>
-      <a href="/bt">Add Nodes</a>
-      <a href="#">Player</a>
+      <a class="{% if request.path.startswith('/nodes/') %} active {% endif %}" href="/nodes/">Nodes</a>
+      <a class="{% if request.path.startswith('/bt/') %} active {% endif %}" href="/bt/">Add Nodes</a>
+      <a class="{% if request.path.startswith('/player/') %} active {% endif %}" href="/player/">Player</a>
     </nav>
 
     {% block content %}{% endblock %}

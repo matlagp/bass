@@ -1,4 +1,5 @@
 import bluetooth
+import copy
 import sys
 import os
 import socket
@@ -36,7 +37,8 @@ def nodes_update(node_id=0):
     unsaved = request.values
     new_volume, new_bass, new_mid, new_trebble = False, False, False, False
 
-    node = node_repository.find(node_id)
+    old_node = node_repository.find(node_id)
+    node = copy.deepcopy(old_node)
 
     def _check_range(value, min_value, max_value, comment):
         if value < min_value or value > max_value:
@@ -95,14 +97,14 @@ def nodes_update(node_id=0):
         return render_template('nodes/index.html', nodes=nodes)
     else:
         nodes = node_repository.all()
-        return render_template('nodes/index.html', nodes=nodes, edited_node=node, errors=errors, unsaved=unsaved)
+        return render_template('nodes/index.html', nodes=nodes, edited_node=old_node, errors=errors, unsaved=unsaved)
 
 
 @app.route('/nodes/<node_id>/edit/')
 def nodes_edit(node_id=0):
     nodes = node_repository.all()
     edited_node = node_repository.find(node_id)
-    return render_template('nodes/index.html', nodes=nodes, edited_node=edited_node, errors={})
+    return render_template('nodes/index.html', nodes=nodes, edited_node=edited_node, errors={}, unsaved={})
 
 
 @app.route('/bt/')
@@ -151,5 +153,9 @@ def bt_pair(bt_addr, bt_port=1):
         sock.close()
         return redirect('/bt/')
 
+
+@app.route('/player/')
+def player():
+    return render_template('player/index.html')
 
 node_repository.create_database()

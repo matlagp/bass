@@ -22,6 +22,7 @@ body {
     flex-direction: column;
     width: 100vw;
     font-family: 'Open Sans', sans-serif;
+    min-height: 100vh;
 }
 
 input {
@@ -48,6 +49,11 @@ button:hover, .btn:hover {
     transform: scale(1.02);
 }
 
+iframe {
+    width: 100vw;
+    flex-grow: 1;
+}
+
 .header {
     text-align: center;
     font-size: 3rem;
@@ -63,7 +69,6 @@ button:hover, .btn:hover {
     flex-direction: row;
     grid-gap: 1rem;
     padding: 1rem 2rem;
-    margin-bottom: 1rem;
     border-bottom: solid black 2px;
     box-shadow: 1px 2px 2px rgba(0, 0, 0, 0.5);
 }
@@ -92,6 +97,7 @@ button:hover, .btn:hover {
     flex-wrap: wrap;
     justify-content: center;
     margin: auto;
+    margin-top: 1rem;
 }
 
 .node {

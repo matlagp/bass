@@ -21,7 +21,7 @@ Nodes
     {% endif %}
     <div class="node-attr">
       <h2>Volume:</h2>
-      <input id="volume" name="volume" type="text" placeholder="{{ edited_node.volume }}" value="{{ errors.get('volume') is not none and unsaved['volume'] or '' }}">
+      <input id="volume" name="volume" type="text" placeholder="{{ edited_node.volume }}" value="{{ unsaved.get('volume') is not none and unsaved['volume'] or '' }}">
       %
       {% if errors.get("volume") is not none %}
       <p>({{ errors["volume"] }})</p>
@@ -29,7 +29,7 @@ Nodes
     </div>
     <div class="node-attr">
       <h2>Bass:</h2>
-      <input id="bass" name="bass" type="text" placeholder="{{ edited_node.bass }}" value="{{ errors.get('bass') is not none and unsaved['bass'] or '' }}">
+      <input id="bass" name="bass" type="text" placeholder="{{ edited_node.bass }}" value="{{ unsaved.get('bass') is not none and unsaved['bass'] or '' }}">
       dB
       {% if errors.get("bass") is not none %}
       <p>({{ errors["bass"] }})</p>
@@ -37,7 +37,7 @@ Nodes
     </div>
     <div class="node-attr">
       <h2>Mid:</h2>
-      <input id="mid" name="mid" type="text" placeholder="{{ edited_node.mid }}" value="{{ errors.get('mid') is not none and unsaved['mid'] or '' }}">
+      <input id="mid" name="mid" type="text" placeholder="{{ edited_node.mid }}" value="{{ unsaved.get('mid') is not none and unsaved['mid'] or '' }}">
       dB
       {% if errors.get("mid") is not none %}
       <p>({{ errors["mid"] }})</p>
@@ -45,7 +45,7 @@ Nodes
     </div>
     <div class="node-attr">
       <h2>Trebble:</h2>
-      <input id="trebble" name="trebble" type="text" placeholder="{{ edited_node.trebble }}" value="{{ errors.get('trebble') is not none and unsaved['trebble'] or '' }}">
+      <input id="trebble" name="trebble" type="text" placeholder="{{ edited_node.trebble }}" value="{{ unsaved.get('trebble') is not none and unsaved['trebble'] or '' }}">
       dB
       {% if errors.get("trebble") is not none %}
       <p>({{ errors["trebble"] }})</p>
