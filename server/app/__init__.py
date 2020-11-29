@@ -117,7 +117,7 @@ def bt():
     )
 
     new_nodes = [
-        (addr, name) for addr, name
+        (addr, name[5:]) for addr, name
         in nearby_devices if name[0:5] == 'node-'
     ]
 
@@ -132,11 +132,10 @@ def bt_pair(bt_addr, bt_port=1):
             # doesn't even have to be reachab
             s.connect(('10.255.255.255', 1))
             IP = s.getsockname()[0]
-        except Exception:
-            IP = '127.0.0.1'
         finally:
             s.close()
         return IP
+
     try:
         sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
         sock.connect((bt_addr, bt_port))

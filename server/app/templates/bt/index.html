@@ -5,15 +5,24 @@ Set up new nodes
 {% endblock %}
 
 {% block content %}
-<h1>New Nodes</h1>
 
-<ul>
+<div class="nodes">
   {% for (addr, name) in new_nodes %}
-    <li>
-        <p>{{ name }}, {{ addr }}</p>
-        <a href="/bt/pair/{{ addr }}">Pair</a>
-    </li>
+  <div class="node">
+    <p class="node-name">Node #{{ name }}</p>
+    <div class="node-attr">
+      <h2>MAC:</h2>
+      <p>{{ addr }}</p>
+    </div>
+    <div class="node-attr node-attr-id">
+      <h2>ID:</h2>
+      <p>{{ name }}</p>
+    </div>
+    <div class="node-buttons">
+      <a href="/bt/pair/{{ addr }}" class="btn" >Pair</a>
+    </div>
+  </div>
   {% endfor %}
-</ul>
+</div>
 
 {% endblock %}
