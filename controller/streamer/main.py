@@ -10,7 +10,7 @@ from gi.repository import Gst, GLib
 
 Gst.init(None)
 p = Pipeline()
-p.src.set_property('device', 'hw:2,1,0')
+p.src.set_property('device', 'hw:1,1,0')
 p.play()
 
 main_loop = GLib.MainLoop()
