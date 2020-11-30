@@ -1,0 +1,12 @@
+[Unit]
+Description=BASS Server for managing nodes
+Wants=mosquitto.service mopidy.service
+After=mosquitto.service mopidy.service
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/bass/server/run.py
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
