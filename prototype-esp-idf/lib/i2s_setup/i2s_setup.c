@@ -26,4 +26,7 @@ void init_i2s()
   //enable MCLK on GPIO0
   REG_WRITE(PIN_CTRL, 0xFF0);
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);
+
+  // swap left and right channels to match with gstreamer
+  REG_SET_BIT(I2S_CONF_REG(I2S_NUM), I2S_TX_MSB_RIGHT);
 }
