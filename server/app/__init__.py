@@ -1,4 +1,5 @@
 import bluetooth
+import copy
 import sys
 import os
 import socket
@@ -15,10 +16,10 @@ mqtt_client.start()
 node_repository = NodeRepository()
 
 
+@app.route('/')
 @app.errorhandler(404)
-def not_found(error):
-    return render_template('404.html'), 404
-
+def redirect_to_nodes(*args):
+    return redirect('/nodes/')
 
 @app.route('/nodes/')
 def nodes_index():
@@ -33,48 +34,77 @@ def nodes_show(node_id=0):
 @app.route('/nodes/<node_id>/', methods=['POST'])
 def nodes_update(node_id=0):
     errors = {}
+    unsaved = request.values
+    new_volume, new_bass, new_mid, new_trebble = False, False, False, False
 
-    node = node_repository.find(node_id)
+    old_node = node_repository.find(node_id)
+    node = copy.deepcopy(old_node)
 
     def _check_range(value, min_value, max_value, comment):
         if value < min_value or value > max_value:
-            errors[comment.lower()] = f"{comment}({value}) not between {min_value} and {max_value}"
+            errors[comment.lower()] = f"should be between {min_value} and {max_value}"
             return False
         return True
 
     if (request.values['volume']):
-        volume = int(request.values['volume'])
-        if volume != node.volume and _check_range(volume, 0, 100, "Volume"):
-            node.volume = volume
-            mqtt_client.client.publish("/nodes/{0:08X}/settings/volume".format(node.id), node.volume, retain=True)
+        try:
+            volume = int(request.values['volume'])
+            if volume != node.volume and _check_range(volume, 0, 100, "Volume"):
+                new_volume = True
+                node.volume = volume
+        except ValueError:
+            errors['volume'] = "should be an integer"
 
     if (request.values['bass']):
-        bass = float(request.values['bass'])
-        if bass != node.bass and _check_range(bass, -24, 12, "Bass"):
-            node.bass = bass
-            mqtt_client.client.publish("/nodes/{0:08X}/settings/bass".format(node.id), node.bass, retain=True)
+        try:
+            bass = float(request.values['bass'])
+            if bass != node.bass and _check_range(bass, -24, 12, "Bass"):
+                new_bass = True
+                node.bass = bass
+        except ValueError:
+            errors['bass'] = "should be a number"
 
     if (request.values['mid']):
-        mid = float(request.values['mid'])
-        if mid != node.mid and _check_range(mid, -24, 12, "Mid"):
-            node.mid = mid
-            mqtt_client.client.publish("/nodes/{0:08X}/settings/mid".format(node.id), node.mid, retain=True)
+        try:
+            mid = float(request.values['mid'])
+            if mid != node.mid and _check_range(mid, -24, 12, "Mid"):
+                new_mid = True
+                node.mid = mid
+        except ValueError:
+            errors['mid'] = "should be a number"
 
     if (request.values['trebble']):
-        trebble = float(request.values['trebble'])
-        if trebble != node.trebble and _check_range(trebble, -24, 12, "Trebble"):
-            node.trebble = trebble
-            mqtt_client.client.publish("/nodes/{0:08X}/settings/trebble".format(node.id), node.trebble, retain=True)
+        try:
+            trebble = float(request.values['trebble'])
+            if trebble != node.trebble and _check_range(trebble, -24, 12, "Trebble"):
+                new_trebble = True
+                node.trebble = trebble
+        except ValueError:
+            errors['trebble'] = "should be a number"
+
 
     if not errors:
-        return render_template('nodes/show.html', node=node)
+        if new_volume:
+            mqtt_client.publish_node_setting(node.hex_id, 'volume', node.volume)
+        if new_bass:
+            mqtt_client.publish_node_setting(node.hex_id, 'bass', node.bass)
+        if new_mid:
+            mqtt_client.publish_node_setting(node.hex_id, 'mid', node.mid)
+        if new_trebble:
+            mqtt_client.publish_node_setting(node.hex_id, 'trebble', node.trebble)
+        node_repository.update(node)
+        nodes = node_repository.all()
+        return render_template('nodes/index.html', nodes=nodes)
     else:
-        return render_template('nodes/edit.html', node=node, errors=errors)
+        nodes = node_repository.all()
+        return render_template('nodes/index.html', nodes=nodes, edited_node=old_node, errors=errors, unsaved=unsaved)
 
 
 @app.route('/nodes/<node_id>/edit/')
 def nodes_edit(node_id=0):
-    return render_template('nodes/edit.html', node=node_repository.find(node_id), errors={})
+    nodes = node_repository.all()
+    edited_node = node_repository.find(node_id)
+    return render_template('nodes/index.html', nodes=nodes, edited_node=edited_node, errors={}, unsaved={})
 
 
 @app.route('/bt/')
@@ -87,7 +117,7 @@ def bt():
     )
 
     new_nodes = [
-        (addr, name) for addr, name
+        (addr, name[5:]) for addr, name
         in nearby_devices if name[0:5] == 'node-'
     ]
 
@@ -102,11 +132,10 @@ def bt_pair(bt_addr, bt_port=1):
             # doesn't even have to be reachab
             s.connect(('10.255.255.255', 1))
             IP = s.getsockname()[0]
-        except Exception:
-            IP = '127.0.0.1'
         finally:
             s.close()
         return IP
+
     try:
         sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
         sock.connect((bt_addr, bt_port))
@@ -123,5 +152,10 @@ def bt_pair(bt_addr, bt_port=1):
         sock.close()
         return redirect('/bt/')
 
+
+@app.route('/player/')
+def player():
+    player_url = os.getenv('PLAYER_URL')
+    return render_template('player/index.html', player_url=player_url)
 
 node_repository.create_database()
