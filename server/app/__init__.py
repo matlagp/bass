@@ -28,7 +28,7 @@ def nodes_index():
 
 @app.route('/nodes/<node_id>/', methods=['GET'])
 def nodes_show(node_id=0):
-    return render_template('nodes/show.html', node=node_repository.find(node_id))
+    return redirect('/nodes/')
 
 
 @app.route('/nodes/<node_id>/', methods=['POST'])
@@ -45,6 +45,9 @@ def nodes_update(node_id=0):
             errors[comment.lower()] = f"should be between {min_value} and {max_value}"
             return False
         return True
+
+    if (request.values['name']):
+        node.name = request.values['name']
 
     if (request.values['volume']):
         try:
@@ -102,9 +105,12 @@ def nodes_update(node_id=0):
 
 @app.route('/nodes/<node_id>/edit/')
 def nodes_edit(node_id=0):
-    nodes = node_repository.all()
-    edited_node = node_repository.find(node_id)
-    return render_template('nodes/index.html', nodes=nodes, edited_node=edited_node, errors={}, unsaved={})
+    try:
+        nodes = node_repository.all()
+        edited_node = node_repository.find(node_id)
+        return render_template('nodes/index.html', nodes=nodes, edited_node=edited_node, errors={}, unsaved={})
+    except:
+        return redirect('/nodes/')
 
 
 @app.route('/bt/')

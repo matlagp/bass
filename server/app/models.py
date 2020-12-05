@@ -1,6 +1,7 @@
 class Node:
-    def __init__(self, id=None, ip='0', volume=100, bass=0, mid=0, trebble=0):
+    def __init__(self, id=None, ip='0', name=None, volume=100, bass=0, mid=0, trebble=0):
         self.id = id
+        self._name = name
         self.ip = ip
         self.volume = volume
         self.bass = bass
@@ -8,7 +9,7 @@ class Node:
         self.trebble = trebble
 
     def __str__(self):
-        return f"Node(id={self.id}, ip={self.ip}, volume={self.volume}, bass={self.bass}, mid={self.mid}, trebble={self.trebble})"
+        return f"Node(id={self.id}, ip={self.ip}, name={self.name}, volume={self.volume}, bass={self.bass}, mid={self.mid}, trebble={self.trebble})"
 
     @property
     def hex_id(self):
@@ -16,4 +17,11 @@ class Node:
 
     @property
     def name(self):
-        return f"Node #{self.hex_id}"
+        if self._name is None:
+            return f"Node #{self.hex_id}"
+        else:
+            return self._name
+
+    @name.setter
+    def name(self, new_name):
+        self._name = new_name

@@ -43,9 +43,10 @@ button, .btn {
     transition-duration: 100ms;
 }
 
-button:hover, .btn:hover {
+button:hover, .btn:hover, button:focus, .btn:focus {
     cursor: pointer;
     box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.5);
+    outline: none;
     transform: scale(1.02);
 }
 
@@ -83,8 +84,9 @@ iframe {
     transition-duration: 100ms;
 }
 
-.navigation > a:hover {
+.navigation > a:hover, .navigation > a:focus {
     text-decoration: underline;
+    outline: none;
     transform: scale(1.02);
 }
 
@@ -93,6 +95,7 @@ iframe {
 }
 
 .nodes {
+    width: 100%;
     display: flex;
     flex-direction: row;
     grid-gap: 2rem;
@@ -101,6 +104,7 @@ iframe {
     justify-content: center;
     margin: auto;
     margin-top: 1rem;
+    box-sizing: border-box;
 }
 
 .node {
@@ -126,9 +130,12 @@ iframe {
 }
 
 .node-name {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     font-weight: bold;
+    height: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid black;
 }
@@ -143,11 +150,40 @@ iframe {
     align-self: flex-end;
 }
 
+.node-attr-error > p {
+    color: red;
+}
+
 input[type="text"] {
     width: 5rem;
-    height: 1rem;
-    margin-top: -0.2rem;
-    margin-bottom: -0.2rem;
+    box-sizing: border-box;
+    height: 1.5rem;
+    margin-top: -0.25rem;
+    margin-bottom: -0.25rem;
+    box-shadow: 0 0 0 1px black;
+    border: none;
+    outline: none;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
+
+.node-attr-error > input[type="text"] {
+    box-shadow: 0 0 0 1px red;
+}
+
+input[type="text"]:active, input[type="text"]:focus {
+    box-shadow: 0 0 0 2px black;
+    outline: none;
+}
+
+.node-attr-error > input[type="text"]:active, .node-attr-error > input[type="text"]:focus {
+    box-shadow: 0 0 0 2px red;
+}
+
+input[type="text"].node-name-input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 1.5rem;
 }
 
 .node-buttons {
