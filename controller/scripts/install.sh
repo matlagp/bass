@@ -14,7 +14,7 @@ wget -q -O - https://apt.mopidy.com/mopidy.gpg | sudo apt-key add -
 # Install dependencies
 apt update
 apt install mosquitto mosquitto-clients python3-pip python-dev python3-dev libbluetooth-dev gstreamer1.0 gstreamer1.0-tools mopidy
-python3 -m pip install flask paho-mqtt pybluez pycodestyle python-dotenv
+python3 -m pip install flask paho-mqtt pybluez python-dotenv
 
 # Load ALSA loopback device on startup
 echo "snd-aloop" >> /etc/modules
