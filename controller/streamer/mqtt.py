@@ -39,8 +39,8 @@ class MQTTClient(Thread):
                 elif topic[3] == 'mid':
                     self._on_mid(node_id, float(msg))
 
-                elif topic[3] == 'trebble':
-                    self._on_trebble(node_id, float(msg))
+                elif topic[3] == 'treble':
+                    self._on_treble(node_id, float(msg))
 
         except Exception as e:
             print(f"MQTT message handling error: {e}")
@@ -63,9 +63,9 @@ class MQTTClient(Thread):
         __class__._check_range(mid, -24, 12, "Mid")
         self.pipeline.set_mid(node_id, mid)
 
-    def _on_trebble(self, node_id, trebble):
-        __class__._check_range(trebble, -24, 12, "Trebble")
-        self.pipeline.set_trebble(node_id, trebble)
+    def _on_treble(self, node_id, treble):
+        __class__._check_range(treble, -24, 12, "Treble")
+        self.pipeline.set_treble(node_id, treble)
 
     def _check_range(value, min_value, max_value, comment):
         if value < min_value or value > max_value:

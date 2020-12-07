@@ -42,12 +42,12 @@ Nodes
       <p>({{ errors["mid"] }})</p>
       {% endif %}
     </div>
-    <div class="node-attr {% if errors.get('trebble') is not none %}node-attr-error{% endif %}">
-      <h2>Trebble:</h2>
-      <input id="trebble" name="trebble" type="text" placeholder="{{ edited_node.trebble }}" value="{{ unsaved.get('trebble') is not none and unsaved['trebble'] or '' }}">
+    <div class="node-attr {% if errors.get('treble') is not none %}node-attr-error{% endif %}">
+      <h2>Treble:</h2>
+      <input id="treble" name="treble" type="text" placeholder="{{ edited_node.treble }}" value="{{ unsaved.get('treble') is not none and unsaved['treble'] or '' }}">
       dB
-      {% if errors.get("trebble") is not none %}
-      <p>({{ errors["trebble"] }})</p>
+      {% if errors.get("treble") is not none %}
+      <p>({{ errors["treble"] }})</p>
       {% endif %}
     </div>
     <div class="node-attr node-attr-id">
@@ -80,8 +80,8 @@ Nodes
       <p>{{ "{0:+}".format(node.mid) }}dB</p>
     </div>
     <div class="node-attr">
-      <h2>Trebble:</h2>
-      <p>{{ "{0:+}".format(node.trebble) }}dB</p>
+      <h2>Treble:</h2>
+      <p>{{ "{0:+}".format(node.treble) }}dB</p>
     </div>
     <div class="node-attr node-attr-id">
       <h2>ID:</h2>

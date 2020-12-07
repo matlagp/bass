@@ -9,7 +9,7 @@ static TickType_t lastCmdTickCount = 0;
 static char topic_volume[27];
 static char topic_bass[25];
 static char topic_mid[24];
-static char topic_trebble[28];
+static char topic_treble[27];
 
 typedef enum ir_code_t {
     VOL_DOWN = 0xf807,
@@ -18,8 +18,8 @@ typedef enum ir_code_t {
     BASS_UP = 0xe718,
     MID_DOWN = 0xf708,
     MID_UP = 0xe31c,
-    TREBBLE_DOWN = 0xbd42,
-    TREBBLE_UP = 0xad52
+    TREBLE_DOWN = 0xbd42,
+    TREBLE_UP = 0xad52
 } ir_code_t;
 
 TaskHandle_t createIrTask() {
@@ -45,7 +45,7 @@ static void irTask(void *_) {
   snprintf(topic_volume, 27, "/nodes/%08X/set/volume", node_id);
   snprintf(topic_bass, 25, "/nodes/%08X/set/bass", node_id);
   snprintf(topic_mid, 24, "/nodes/%08X/set/mid", node_id);
-  snprintf(topic_trebble, 28, "/nodes/%08X/set/trebble", node_id);
+  snprintf(topic_treble, 27, "/nodes/%08X/set/treble", node_id);
 
   ir_parser_config_t ir_parser_config = IR_PARSER_DEFAULT_CONFIG((ir_dev_t)IR_CHANNEL_NUM);
   ir_parser_config.flags |= IR_TOOLS_FLAGS_PROTO_EXT;
@@ -96,11 +96,11 @@ static void processIrCmd(uint32_t cmd, bool repeat) {
     case MID_UP:
       mqtt_publish(topic_mid, "+0.5");
       break;
-    case TREBBLE_DOWN:
-      mqtt_publish(topic_trebble, "-0.5");
+    case TREBLE_DOWN:
+      mqtt_publish(topic_treble, "-0.5");
       break;
-    case TREBBLE_UP:
-      mqtt_publish(topic_trebble, "+0.5");
+    case TREBLE_UP:
+      mqtt_publish(topic_treble, "+0.5");
       break;
     default:
       ESP_LOGI(IR_TASK_TAG, "Unsupported command: %04x", cmd);

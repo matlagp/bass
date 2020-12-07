@@ -35,7 +35,7 @@ def nodes_show(node_id=0):
 def nodes_update(node_id=0):
     errors = {}
     unsaved = request.values
-    new_volume, new_bass, new_mid, new_trebble = False, False, False, False
+    new_volume, new_bass, new_mid, new_treble = False, False, False, False
 
     old_node = node_repository.find(node_id)
     node = copy.deepcopy(old_node)
@@ -76,14 +76,14 @@ def nodes_update(node_id=0):
         except ValueError:
             errors['mid'] = "should be a number"
 
-    if (request.values['trebble']):
+    if (request.values['treble']):
         try:
-            trebble = float(request.values['trebble'])
-            if trebble != node.trebble and _check_range(trebble, -24, 12, "Trebble"):
-                new_trebble = True
-                node.trebble = trebble
+            treble = float(request.values['treble'])
+            if treble != node.treble and _check_range(treble, -24, 12, "Treble"):
+                new_treble = True
+                node.treble = treble
         except ValueError:
-            errors['trebble'] = "should be a number"
+            errors['treble'] = "should be a number"
 
 
     if not errors:
@@ -93,8 +93,8 @@ def nodes_update(node_id=0):
             mqtt_client.publish_node_setting(node.hex_id, 'bass', node.bass)
         if new_mid:
             mqtt_client.publish_node_setting(node.hex_id, 'mid', node.mid)
-        if new_trebble:
-            mqtt_client.publish_node_setting(node.hex_id, 'trebble', node.trebble)
+        if new_treble:
+            mqtt_client.publish_node_setting(node.hex_id, 'treble', node.treble)
         node_repository.update(node)
         nodes = node_repository.all()
         return render_template('nodes/index.html', nodes=nodes)

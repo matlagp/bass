@@ -64,13 +64,13 @@ class MQTTClient(threading.Thread):
                     node.mid = new_mid
                     __class__._publish_node_setting(client, topic[1], 'mid', new_mid)
 
-                elif topic[3] == 'trebble':
-                    incoming_trebble = float(msg)
-                    new_trebble = __class__._new_setting_value(node.trebble, incoming_trebble, msg)
+                elif topic[3] == 'treble':
+                    incoming_treble = float(msg)
+                    new_treble = __class__._new_setting_value(node.treble, incoming_treble, msg)
 
-                    __class__._check_range(new_trebble, -24, 12, "Trebble")
-                    node.trebble = new_trebble
-                    __class__._publish_node_setting(client, topic[1], 'trebble', new_trebble)
+                    __class__._check_range(new_treble, -24, 12, "Treble")
+                    node.treble = new_treble
+                    __class__._publish_node_setting(client, topic[1], 'treble', new_treble)
 
                 __class__.node_repository.update(node)
 
