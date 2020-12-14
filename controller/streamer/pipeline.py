@@ -58,9 +58,9 @@ class Pipeline(object):
         node.set_mid(mid)
         print(self.nodes)
 
-    def set_trebble(self, node_id, trebble):
+    def set_treble(self, node_id, treble):
         node = self.get_node(node_id)
-        node.set_trebble(trebble)
+        node.set_treble(treble)
         print(self.nodes)
 
     def pause(self):
@@ -81,7 +81,7 @@ class Node(object):
         self.vol = 100
         self.bass = 0.0
         self.mid = 0.0
-        self.trebble = 0.0
+        self.treble = 0.0
 
     def __repr__(self):
         return f"Node#{self.node_id}"\
@@ -90,7 +90,7 @@ class Node(object):
             f"vol: {self.vol}, "\
             f"bass: {self.bass}, "\
             f"mid: {self.mid}, "\
-            f"trebble: {self.trebble})"
+            f"treble: {self.treble})"
 
     def set_volume(self, volume):
         self.vol = volume
@@ -112,10 +112,10 @@ class Node(object):
         if self.attached:
             self.equalizer.set_property('band1', self.mid)
 
-    def set_trebble(self, bass):
-        self.trebble = bass
+    def set_treble(self, bass):
+        self.treble = bass
         if self.attached:
-            self.equalizer.set_property('band2', self.trebble)
+            self.equalizer.set_property('band2', self.treble)
 
     def attach(self):
         if self.attached: return
@@ -146,7 +146,7 @@ class Node(object):
         self.set_volume(self.vol)
         self.set_bass(self.bass)
         self.set_mid(self.mid)
-        self.set_trebble(self.trebble)
+        self.set_treble(self.treble)
 
         self.pipeline.play()
 

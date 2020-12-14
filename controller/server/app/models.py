@@ -1,15 +1,15 @@
 class Node:
-    def __init__(self, id=None, ip='0', name=None, volume=100, bass=0, mid=0, trebble=0):
+    def __init__(self, id=None, ip='0', name=None, volume=100, bass=0, mid=0, treble=0):
         self.id = id
         self._name = name
         self.ip = ip
         self.volume = volume
         self.bass = bass
         self.mid = mid
-        self.trebble = trebble
+        self.treble = treble
 
     def __str__(self):
-        return f"Node(id={self.id}, ip={self.ip}, name={self.name}, volume={self.volume}, bass={self.bass}, mid={self.mid}, trebble={self.trebble})"
+        return f"Node(id={self.id}, ip={self.ip}, name={self.name}, volume={self.volume}, bass={self.bass}, mid={self.mid}, treble={self.treble})"
 
     @property
     def hex_id(self):

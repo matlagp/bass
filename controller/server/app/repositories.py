@@ -16,14 +16,14 @@ class NodeRepository:
                 'volume INT NOT NULL DEFAULT 100,'
                 'bass REAL NOT NULL DEFAULT 0,'
                 'mid REAL NOT NULL DEFAULT 0,'
-                'trebble REAL NOT NULL DEFAULT 0)'
+                'treble REAL NOT NULL DEFAULT 0)'
             )
 
     def all(self):
         with DbConn() as conn:
             return [
-                Node(id, ip, name, volume, bass, mid, trebble) for (id, ip, name, volume, bass, mid, trebble)
-                in conn.execute('select id, ip, name, volume, bass, mid, trebble from Nodes')
+                Node(id, ip, name, volume, bass, mid, treble) for (id, ip, name, volume, bass, mid, treble)
+                in conn.execute('select id, ip, name, volume, bass, mid, treble from Nodes')
             ]
 
     def create(self, node):
@@ -39,14 +39,14 @@ class NodeRepository:
     def update(self, node):
         with DbConn() as conn:
             conn.execute(
-                'update Nodes set ip = ?, name = ?, volume = ?, bass = ?, mid = ?, trebble = ? where id = ?',
-                (node.ip, node.name, node.volume, node.bass, node.mid, node.trebble, node.id)
+                'update Nodes set ip = ?, name = ?, volume = ?, bass = ?, mid = ?, treble = ? where id = ?',
+                (node.ip, node.name, node.volume, node.bass, node.mid, node.treble, node.id)
             )
         return node
 
     def find(self, id):
         with DbConn() as conn:
-            cmd = 'select id, ip, name, volume, bass, mid, trebble from Nodes where id = ? limit 1'
+            cmd = 'select id, ip, name, volume, bass, mid, treble from Nodes where id = ? limit 1'
             params = conn.execute(cmd, (id,)).fetchone()
             return Node(*params)
 
