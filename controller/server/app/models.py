@@ -17,10 +17,7 @@ class Node:
 
     @property
     def name(self):
-        if self._name is None:
-            return f"Node #{self.hex_id}"
-        else:
-            return self._name
+        return self._name or f"Node #{self.hex_id}"
 
     @name.setter
     def name(self, new_name):
